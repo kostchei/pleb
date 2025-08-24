@@ -207,6 +207,20 @@ class NPCGenerator {
         const secondaryStat = mapping.secondary;
         const dumpStat = mapping.dump;
         
+        // Convert abbreviated stats to full names
+        const statMap = {
+            'str': 'strength',
+            'dex': 'dexterity', 
+            'con': 'constitution',
+            'int': 'intelligence',
+            'wis': 'wisdom',
+            'cha': 'charisma'
+        };
+        
+        const primaryStatFull = statMap[primaryStat];
+        const secondaryStatFull = statMap[secondaryStat];
+        const dumpStatFull = statMap[dumpStat];
+        
         const statNames = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
         const stats = {};
         
@@ -216,19 +230,19 @@ class NPCGenerator {
         });
         
         // Apply minimums first
-        stats[primaryStat] = Math.max(stats[primaryStat], 13);
-        stats[secondaryStat] = Math.max(stats[secondaryStat], 9);
-        stats[dumpStat] = Math.max(stats[dumpStat], 3);
+        stats[primaryStatFull] = Math.max(stats[primaryStatFull], 13);
+        stats[secondaryStatFull] = Math.max(stats[secondaryStatFull], 9);
+        stats[dumpStatFull] = Math.max(stats[dumpStatFull], 3);
         
         statNames.forEach(stat => {
-            if (stat !== primaryStat && stat !== secondaryStat && stat !== dumpStat) {
+            if (stat !== primaryStatFull && stat !== secondaryStatFull && stat !== dumpStatFull) {
                 stats[stat] = Math.max(stats[stat], 6);
             }
         });
         
         // Add +1 to primary and secondary after minimums
-        stats[primaryStat] += 1;
-        stats[secondaryStat] += 1;
+        stats[primaryStatFull] += 1;
+        stats[secondaryStatFull] += 1;
         
         return { stats, primaryStat, secondaryStat, dumpStat };
     }
@@ -239,6 +253,20 @@ class NPCGenerator {
         const secondaryStat = mapping.secondary;
         const dumpStat = mapping.dump;
         
+        // Convert abbreviated stats to full names
+        const statMap = {
+            'str': 'strength',
+            'dex': 'dexterity', 
+            'con': 'constitution',
+            'int': 'intelligence',
+            'wis': 'wisdom',
+            'cha': 'charisma'
+        };
+        
+        const primaryStatFull = statMap[primaryStat];
+        const secondaryStatFull = statMap[secondaryStat];
+        const dumpStatFull = statMap[dumpStat];
+        
         const statNames = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
         const stats = {};
         
@@ -248,17 +276,17 @@ class NPCGenerator {
         });
         
         // Determine tertiary stat (highest remaining after primary, secondary, dump)
-        const remaining = statNames.filter(s => s !== primaryStat && s !== secondaryStat && s !== dumpStat);
+        const remaining = statNames.filter(s => s !== primaryStatFull && s !== secondaryStatFull && s !== dumpStatFull);
         const tertiaryStat = remaining.reduce((max, stat) => stats[stat] > stats[max] ? stat : max);
         
         // Apply player minimums
-        stats[primaryStat] = Math.max(stats[primaryStat], 15);
-        stats[secondaryStat] = Math.max(stats[secondaryStat], 14);
+        stats[primaryStatFull] = Math.max(stats[primaryStatFull], 15);
+        stats[secondaryStatFull] = Math.max(stats[secondaryStatFull], 14);
         stats[tertiaryStat] = Math.max(stats[tertiaryStat], 13);
-        stats[dumpStat] = Math.max(stats[dumpStat], 3);
+        stats[dumpStatFull] = Math.max(stats[dumpStatFull], 3);
         
         statNames.forEach(stat => {
-            if (stat !== primaryStat && stat !== secondaryStat && stat !== tertiaryStat && stat !== dumpStat) {
+            if (stat !== primaryStatFull && stat !== secondaryStatFull && stat !== tertiaryStat && stat !== dumpStatFull) {
                 stats[stat] = Math.max(stats[stat], 6);
             }
         });
@@ -290,35 +318,35 @@ class NPCGenerator {
     generateClassInfo(primaryStat) {
         // Simple class assignment based on primary stat
         const classMap = {
-            'strength': { type: 'Blunt', name: 'Fighter', subclass: 'Champion' },
-            'dexterity': { type: 'Blunt', name: 'Rogue', subclass: 'Thief' },
-            'constitution': { type: 'Blunt', name: 'Barbarian', subclass: 'Berserker' },
-            'intelligence': { type: 'Caster', name: 'Wizard', subclass: 'Evocation' },
-            'wisdom': { type: 'Semicaster', name: 'Cleric', subclass: 'Life' },
-            'charisma': { type: 'Caster', name: 'Sorcerer', subclass: 'Draconic' }
+            'str': { type: 'Blunt', name: 'Fighter', subclass: 'Champion' },
+            'dex': { type: 'Blunt', name: 'Rogue', subclass: 'Thief' },
+            'con': { type: 'Blunt', name: 'Barbarian', subclass: 'Berserker' },
+            'int': { type: 'Caster', name: 'Wizard', subclass: 'Evocation' },
+            'wis': { type: 'Semicaster', name: 'Cleric', subclass: 'Life' },
+            'cha': { type: 'Caster', name: 'Sorcerer', subclass: 'Draconic' }
         };
         
         const classInfo = classMap[primaryStat] || { type: 'Blunt', name: 'Fighter', subclass: 'Champion' };
         
         // Add some randomization
         const alternatives = {
-            'strength': [
+            'str': [
                 { type: 'Blunt', name: 'Paladin', subclass: 'Devotion' },
                 { type: 'Blunt', name: 'Fighter', subclass: 'Champion' }
             ],
-            'dexterity': [
+            'dex': [
                 { type: 'Blunt', name: 'Ranger', subclass: 'Hunter' },
                 { type: 'Blunt', name: 'Rogue', subclass: 'Thief' }
             ],
-            'intelligence': [
+            'int': [
                 { type: 'Caster', name: 'Wizard', subclass: 'Evocation' },
                 { type: 'Caster', name: 'Artificer', subclass: 'Alchemist' }
             ],
-            'wisdom': [
+            'wis': [
                 { type: 'Semicaster', name: 'Cleric', subclass: 'Life' },
                 { type: 'Semicaster', name: 'Druid', subclass: 'Land' }
             ],
-            'charisma': [
+            'cha': [
                 { type: 'Caster', name: 'Sorcerer', subclass: 'Draconic' },
                 { type: 'Caster', name: 'Warlock', subclass: 'Fiend' }
             ]
@@ -418,8 +446,18 @@ class NPCGenerator {
     }
     
     generateBackground(primaryStat, secondaryStat) {
+        // Convert abbreviated stats to full names
+        const statMap = {
+            'str': 'Strength',
+            'dex': 'Dexterity', 
+            'con': 'Constitution',
+            'int': 'Intelligence',
+            'wis': 'Wisdom',
+            'cha': 'Charisma'
+        };
+        
         const targetStat = Math.random() < 0.75 ? primaryStat : secondaryStat;
-        const mapped = this.capitalizeFirst(targetStat);
+        const mapped = statMap[targetStat] || this.capitalizeFirst(targetStat);
         
         const matchingBgs = this.backgrounds.filter(bg => 
             bg.primary === mapped || bg.tertiary === mapped
@@ -451,6 +489,16 @@ class NPCGenerator {
     }
     
     generateOriginFeats(species, primaryStat, isPlayer = false) {
+        // Convert abbreviated stats to full names
+        const statMap = {
+            'str': 'Strength',
+            'dex': 'Dexterity', 
+            'con': 'Constitution',
+            'int': 'Intelligence',
+            'wis': 'Wisdom',
+            'cha': 'Charisma'
+        };
+        
         const feats = [];
         let fCount = 1;
         
@@ -475,7 +523,7 @@ class NPCGenerator {
                 feat = this.originFeats[Math.floor(Math.random() * this.originFeats.length)];
             } else {
                 // Primary stat related feat
-                const mapped = this.capitalizeFirst(primaryStat);
+                const mapped = statMap[primaryStat] || this.capitalizeFirst(primaryStat);
                 const matching = this.originFeats.filter(f => f.primaryStat === mapped);
                 if (matching.length > 0) {
                     feat = matching[Math.floor(Math.random() * matching.length)];
