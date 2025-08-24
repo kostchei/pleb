@@ -23,6 +23,7 @@ class NPC:
     species: str
     background: str
     traits: List[str]
+    origin_feats: List[str]
 
 
 class NPCGenerator:
@@ -34,6 +35,8 @@ class NPCGenerator:
         self.level_distribution = self._load_distribution_from_db("level_distribution", "level")
         self.class_distribution = self._load_distribution_from_db("class_type_distribution", "class_type")
         self.species_distribution = self._load_distribution_from_db("species_distribution", "species")
+        self.stat_distribution = self._load_distribution_from_db("stat_distribution", "stat")
+        self.primary_stat_mapping = self._load_primary_stat_mapping()
     
     def _load_distribution_from_db(self, table_name: str, value_column: str) -> List[Tuple[str, float]]:
         conn = sqlite3.connect(self.db_path)
@@ -42,6 +45,21 @@ class NPCGenerator:
         distribution = [(str(row[0]), row[1]) for row in cursor.fetchall()]
         conn.close()
         return distribution
+    
+    def _load_primary_stat_mapping(self) -> Dict[str, Dict[str, str]]:
+        """Load primary stat mappings from database"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT primary_stat, secondary_stat, dump_stat FROM primary_stat_mapping")
+        mapping = {}
+        for row in cursor.fetchall():
+            primary, secondary, dump = row
+            mapping[primary.lower()] = {
+                'secondary': secondary.lower(),
+                'dump': dump.lower()
+            }
+        conn.close()
+        return mapping
     
     def _load_classes_data(self, filename: str) -> Dict:
         with open(filename, 'r') as file:
@@ -58,11 +76,36 @@ class NPCGenerator:
                 return value
         return distribution[-1][0]
     
-    def _roll_stats(self) -> Dict[str, int]:
+    def _roll_stats(self) -> Tuple[Dict[str, int], str, str, str]:
+        """Roll stats using proper CSV-based assignment. Returns (stats, primary_stat, secondary_stat, dump_stat)"""
         def roll_3d6():
             return sum([random.randint(1, 6) for _ in range(3)])
         
-        # Roll base stats
+        # Map CSV short names to full stat names
+        csv_to_full_name = {
+            'str': 'strength',
+            'dex': 'dexterity', 
+            'con': 'constitution',
+            'int': 'intelligence',
+            'wis': 'wisdom',
+            'cha': 'charisma'
+        }
+        
+        # Step 1: Determine primary stat from stat_distribution.csv
+        primary_stat_csv = self._weighted_choice(self.stat_distribution).lower()
+        primary_stat_key = csv_to_full_name.get(primary_stat_csv, primary_stat_csv)
+        
+        # Step 2: Get secondary and dump stats from primary_stat.csv mapping
+        stat_mapping = self.primary_stat_mapping.get(primary_stat_csv)
+        if not stat_mapping:
+            # Fallback if mapping not found
+            secondary_stat_key = 'wisdom'
+            dump_stat_key = 'intelligence'
+        else:
+            secondary_stat_key = csv_to_full_name.get(stat_mapping['secondary'], stat_mapping['secondary'])
+            dump_stat_key = csv_to_full_name.get(stat_mapping['dump'], stat_mapping['dump'])
+        
+        # Step 3: Roll base stats (3d6 each)
         base_stats = {
             'strength': roll_3d6(),
             'dexterity': roll_3d6(),
@@ -72,40 +115,29 @@ class NPCGenerator:
             'charisma': roll_3d6()
         }
         
-        # Find primary (highest), secondary (second highest), and tertiary (third highest) stats
-        sorted_stats = sorted(base_stats.items(), key=lambda x: x[1], reverse=True)
-        primary_stat = sorted_stats[0][0]
-        secondary_stat = sorted_stats[1][0]
-        tertiary_stat = sorted_stats[2][0]
+        # Step 4: Apply minimums to base rolls first
+        minimums_applied = self._apply_stat_minimums_by_role(base_stats, primary_stat_key, secondary_stat_key, dump_stat_key)
         
-        # Add +1 to primary, secondary, and tertiary stats
-        base_stats[primary_stat] += 1
-        base_stats[secondary_stat] += 1
-        base_stats[tertiary_stat] += 1
+        # Step 5: Add +1 to primary and secondary stats after minimums
+        minimums_applied[primary_stat_key] += 1
+        minimums_applied[secondary_stat_key] += 1
         
-        # Apply minimums while keeping higher rolled values
-        return self._apply_stat_minimums(base_stats)
+        final_stats = minimums_applied
+        
+        return final_stats, primary_stat_key, secondary_stat_key, dump_stat_key
     
-    def _apply_stat_minimums(self, stats: Dict[str, int]) -> Dict[str, int]:
-        # Find primary (highest) and secondary (second highest) stats
-        sorted_stats = sorted(stats.items(), key=lambda x: x[1], reverse=True)
-        primary_stat = sorted_stats[0][0]
-        secondary_stat = sorted_stats[1][0]
-        
-        # Find dump stat (lowest)
-        dump_stat = sorted_stats[-1][0]
-        
-        # Apply minimums - use higher of rolled value or minimum
+    def _apply_stat_minimums_by_role(self, stats: Dict[str, int], primary_stat: str, secondary_stat: str, dump_stat: str) -> Dict[str, int]:
+        """Apply minimums based on assigned roles from CSV, not rolled values"""
         final_stats = {}
-        for stat, value in stats.items():
-            if stat == primary_stat:
-                final_stats[stat] = max(value, 13)  # Primary minimum 13
-            elif stat == secondary_stat:
-                final_stats[stat] = max(value, 9)   # Secondary minimum 9
-            elif stat == dump_stat:
-                final_stats[stat] = max(value, 3)   # Dump minimum 3
+        for stat_name, value in stats.items():
+            if stat_name == primary_stat:
+                final_stats[stat_name] = max(value, 13)  # Primary minimum 13
+            elif stat_name == secondary_stat:
+                final_stats[stat_name] = max(value, 9)   # Secondary minimum 9
+            elif stat_name == dump_stat:
+                final_stats[stat_name] = max(value, 3)   # Dump minimum 3
             else:
-                final_stats[stat] = max(value, 6)   # Others minimum 6
+                final_stats[stat_name] = max(value, 6)   # Others minimum 6
         
         return final_stats
     
@@ -132,7 +164,7 @@ class NPCGenerator:
         if use_primary:
             cursor.execute("SELECT background FROM backgrounds WHERE primary_stat = ?", (mapped_stat,))
         else:
-            cursor.execute("SELECT background FROM backgrounds WHERE secondary_stat = ?", (mapped_stat,))
+            cursor.execute("SELECT background FROM backgrounds WHERE primary_stat = ? OR tertiary_stat = ?", (mapped_stat, mapped_stat))
         
         backgrounds = [row[0] for row in cursor.fetchall()]
         conn.close()
@@ -146,10 +178,7 @@ class NPCGenerator:
             
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
-            if use_primary:
-                cursor.execute("SELECT background FROM backgrounds WHERE secondary_stat = ?", (mapped_other,))
-            else:
-                cursor.execute("SELECT background FROM backgrounds WHERE primary_stat = ?", (mapped_other,))
+            cursor.execute("SELECT background FROM backgrounds WHERE primary_stat = ? OR tertiary_stat = ?", (mapped_other, mapped_other))
             
             backgrounds = [row[0] for row in cursor.fetchall()]
             conn.close()
@@ -263,7 +292,7 @@ class NPCGenerator:
             CREATE TABLE IF NOT EXISTS backgrounds (
                 background TEXT PRIMARY KEY,
                 primary_stat TEXT,
-                secondary_stat TEXT
+                tertiary_stat TEXT
             )
         ''')
         
@@ -271,6 +300,31 @@ class NPCGenerator:
             CREATE TABLE IF NOT EXISTS traits (
                 virtue TEXT,
                 vice TEXT
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS origin_feats (
+                feat_name TEXT PRIMARY KEY,
+                category TEXT,
+                description TEXT,
+                benefits TEXT,
+                primary_stat TEXT
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS stat_distribution (
+                stat TEXT PRIMARY KEY,
+                weight REAL
+            )
+        ''')
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS primary_stat_mapping (
+                primary_stat TEXT PRIMARY KEY,
+                secondary_stat TEXT,
+                dump_stat TEXT
             )
         ''')
         
@@ -293,12 +347,17 @@ class NPCGenerator:
         if 'traits' not in columns:
             cursor.execute('ALTER TABLE npcs ADD COLUMN traits TEXT')
         
-        # Check if backgrounds table needs secondary_stat column
+        if 'origin_feats' not in columns:
+            cursor.execute('ALTER TABLE npcs ADD COLUMN origin_feats TEXT')
+        
+        # Check if backgrounds table needs tertiary_stat column
         cursor.execute("PRAGMA table_info(backgrounds)")
         bg_columns = [column[1] for column in cursor.fetchall()]
         
-        if 'secondary_stat' not in bg_columns:
-            cursor.execute('ALTER TABLE backgrounds ADD COLUMN secondary_stat TEXT')
+        if 'tertiary_stat' not in bg_columns:
+            cursor.execute('ALTER TABLE backgrounds ADD COLUMN tertiary_stat TEXT')
+        
+        # Drop old secondary_stat column if it exists (SQLite doesn't support DROP COLUMN easily, so we'll ignore it)
         
         conn.commit()
         conn.close()
@@ -342,16 +401,16 @@ class NPCGenerator:
                         cursor.execute("INSERT INTO species_distribution (species, weight) VALUES (?, ?)", 
                                      (row[0], float(row[1])))
         
-        cursor.execute("SELECT COUNT(*) FROM backgrounds")
-        if cursor.fetchone()[0] == 0:
-            # Migrate backgrounds
-            with open("backgrounds.csv", 'r') as file:
-                reader = csv.reader(file)
-                next(reader)  # Skip header
-                for row in reader:
-                    if len(row) >= 3 and row[0] and row[1] and row[2]:
-                        cursor.execute("INSERT INTO backgrounds (background, primary_stat, secondary_stat) VALUES (?, ?, ?)", 
-                                     (row[0], row[1], row[2]))
+        # Always refresh backgrounds to get latest data
+        cursor.execute("DELETE FROM backgrounds")  # Clear existing data
+        # Migrate backgrounds
+        with open("backgrounds.csv", 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header
+            for row in reader:
+                if len(row) >= 3 and row[0] and row[1] and row[2]:
+                    cursor.execute("INSERT OR REPLACE INTO backgrounds (background, primary_stat, tertiary_stat) VALUES (?, ?, ?)", 
+                                 (row[0], row[1], row[2]))
         
         cursor.execute("SELECT COUNT(*) FROM traits")
         if cursor.fetchone()[0] == 0:
@@ -363,6 +422,37 @@ class NPCGenerator:
                     if len(row) >= 2 and row[0] and row[1]:
                         cursor.execute("INSERT INTO traits (virtue, vice) VALUES (?, ?)", 
                                      (row[0], row[1]))
+        
+        cursor.execute("SELECT COUNT(*) FROM origin_feats")
+        if cursor.fetchone()[0] == 0:
+            # Migrate origin feats
+            with open("origin_feats.csv", 'r') as file:
+                reader = csv.reader(file)
+                next(reader)  # Skip header
+                for row in reader:
+                    if len(row) >= 5 and row[0] and row[1] and row[2] and row[3] and row[4]:
+                        cursor.execute("INSERT INTO origin_feats (feat_name, category, description, benefits, primary_stat) VALUES (?, ?, ?, ?, ?)", 
+                                     (row[0], row[1], row[2], row[3], row[4]))
+        
+        # Always refresh stat distribution to get latest data
+        cursor.execute("DELETE FROM stat_distribution")
+        with open("stat_distribution.csv", 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header
+            for row in reader:
+                if len(row) >= 2 and row[0] and row[1]:
+                    cursor.execute("INSERT INTO stat_distribution (stat, weight) VALUES (?, ?)", 
+                                 (row[0], float(row[1])))
+        
+        # Always refresh primary stat mapping to get latest data
+        cursor.execute("DELETE FROM primary_stat_mapping")
+        with open("primary_stat.csv", 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header
+            for row in reader:
+                if len(row) >= 3 and row[0] and row[1] and row[2]:
+                    cursor.execute("INSERT INTO primary_stat_mapping (primary_stat, secondary_stat, dump_stat) VALUES (?, ?, ?)", 
+                                 (row[0].strip(), row[1].strip(), row[2].strip()))
         
         conn.commit()
         conn.close()
@@ -493,14 +583,66 @@ class NPCGenerator:
         
         return selected_traits
     
+    def _generate_origin_feats(self, species: str, primary_stat: str) -> List[str]:
+        """Generate origin feats: 50% chance for all plebs, humans get 2 separate 50% chances"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Get all origin feats
+        cursor.execute("SELECT feat_name, primary_stat FROM origin_feats")
+        all_feats = cursor.fetchall()
+        conn.close()
+        
+        if not all_feats:
+            return []
+        
+        origin_feats = []
+        
+        # Determine number of rolls based on species
+        if species.lower() == 'human':
+            # Humans get 2 separate 50% chances
+            rolls = 2
+        else:
+            # All other species get 1 50% chance
+            rolls = 1
+        
+        for _ in range(rolls):
+            # 50% chance to get an origin feat
+            if random.random() < 0.5:
+                # 50% chance it's random, 50% chance it relates to primary stat
+                if random.random() < 0.5:
+                    # Random feat
+                    feat_name = random.choice([feat[0] for feat in all_feats])
+                else:
+                    # Primary stat related feat
+                    # Map full stat names to the format used in origin_feats.csv
+                    stat_mapping = {
+                        'strength': 'Strength',
+                        'dexterity': 'Dexterity', 
+                        'constitution': 'Constitution',
+                        'intelligence': 'Intelligence',
+                        'wisdom': 'Wisdom',
+                        'charisma': 'Charisma'
+                    }
+                    
+                    mapped_stat = stat_mapping.get(primary_stat.lower(), primary_stat.title())
+                    primary_stat_feats = [feat[0] for feat in all_feats if feat[1] == mapped_stat]
+                    
+                    if primary_stat_feats:
+                        feat_name = random.choice(primary_stat_feats)
+                    else:
+                        # Fallback to random if no primary stat feats found
+                        feat_name = random.choice([feat[0] for feat in all_feats])
+                
+                # Avoid duplicates
+                if feat_name not in origin_feats:
+                    origin_feats.append(feat_name)
+        
+        return origin_feats
+    
     def generate_npc(self, use_cultural_name: bool = False, culture: str = None, used_vowels: set = None) -> NPC:
         level = int(self._weighted_choice(self.level_distribution))
-        stats = self._roll_stats()
-        
-        # Determine primary and secondary stats for background selection
-        sorted_stats = sorted(stats.items(), key=lambda x: x[1], reverse=True)
-        primary_stat = sorted_stats[0][0]
-        secondary_stat = sorted_stats[1][0]
+        stats, primary_stat, secondary_stat, dump_stat = self._roll_stats()
         
         class_type, class_name, subclass = self._determine_class_info(primary_stat)
         species = self._weighted_choice(self.species_distribution)
@@ -514,6 +656,9 @@ class NPCGenerator:
         
         # Generate traits
         traits = self._generate_traits()
+        
+        # Generate origin feats
+        origin_feats = self._generate_origin_feats(species, primary_stat)
         
         npc = NPC(
             name=name,
@@ -530,7 +675,8 @@ class NPCGenerator:
             subclass=subclass,
             species=species,
             background=background,
-            traits=traits
+            traits=traits,
+            origin_feats=origin_feats
         )
         
         return npc
@@ -540,13 +686,13 @@ class NPCGenerator:
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO npcs (name, level, strength, dexterity, constitution, intelligence, 
-                            wisdom, charisma, primary_stat, class_type, class_name, subclass, species, background, traits)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            wisdom, charisma, primary_stat, class_type, class_name, subclass, species, background, traits, origin_feats)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             npc.name, npc.level, npc.strength, npc.dexterity, npc.constitution,
             npc.intelligence, npc.wisdom, npc.charisma, npc.primary_stat,
             npc.class_type, npc.class_name, npc.subclass, npc.species, npc.background,
-            ", ".join(npc.traits)
+            ", ".join(npc.traits), ", ".join(npc.origin_feats)
         ))
         npc_id = cursor.lastrowid
         conn.commit()
@@ -566,6 +712,25 @@ class NPCGenerator:
         results = [dict(zip(columns, row)) for row in cursor.fetchall()]
         conn.close()
         return results
+    
+    def clear_npc_database(self) -> bool:
+        """Clear all NPCs from the database and reset the auto-increment counter"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # Delete all NPCs
+            cursor.execute('DELETE FROM npcs')
+            
+            # Reset the auto-increment counter
+            cursor.execute('DELETE FROM sqlite_sequence WHERE name="npcs"')
+            
+            conn.commit()
+            conn.close()
+            return True
+        except Exception as e:
+            print(f"Error clearing database: {e}")
+            return False
     
     def generate_party_size(self) -> int:
         """Roll 1d4 and 1d6, return the higher value for party size"""
@@ -629,6 +794,8 @@ class NPCGenerator:
         print(f"Background: {npc.background}")
         if npc.traits:
             print(f"Traits: {', '.join(npc.traits)}")
+        if npc.origin_feats:
+            print(f"Origin Feats: {', '.join(npc.origin_feats)}")
         if npc.class_type:
             print(f"Class Type: {npc.class_type.title()}")
         else:
@@ -647,10 +814,11 @@ class NPCGenerator:
             print("1. Party - Generate a group of plebs")
             print("2. Individual - Generate a single NPC")
             print("3. Player - Generate player character")
-            print("4. Exit")
+            print("4. Clear Database - Remove all NPCs")
+            print("5. Exit")
             print("="*40)
             
-            choice = input("Select an option (1-4): ").strip()
+            choice = input("Select an option (1-5): ").strip()
             
             if choice == '1':
                 self.generate_party()
@@ -662,10 +830,20 @@ class NPCGenerator:
             elif choice == '3':
                 print("\nPlayer character generation not yet implemented.")
             elif choice == '4':
+                print("\nAre you sure you want to clear all NPCs from the database?")
+                confirm = input("Type 'yes' to confirm: ").strip().lower()
+                if confirm == 'yes':
+                    if self.clear_npc_database():
+                        print("Database cleared successfully! NPC IDs will restart from 1.")
+                    else:
+                        print("Failed to clear database.")
+                else:
+                    print("Database clear cancelled.")
+            elif choice == '5':
                 print("Goodbye!")
                 break
             else:
-                print("Invalid choice. Please select 1-4.")
+                print("Invalid choice. Please select 1-5.")
 
 
 def main():
