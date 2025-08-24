@@ -141,6 +141,91 @@ class NPCGenerator:
         
         return final_stats
     
+    def _roll_player_stats(self, chosen_species: str = None) -> Tuple[Dict[str, int], str, str, str]:
+        """Roll player stats with different rules: 4d6 keep highest 3, higher minimums, random +1 distribution"""
+        def roll_4d6_keep_3():
+            rolls = [random.randint(1, 6) for _ in range(4)]
+            rolls.sort(reverse=True)
+            return sum(rolls[:3])
+        
+        # Map CSV short names to full stat names
+        csv_to_full_name = {
+            'str': 'strength',
+            'dex': 'dexterity', 
+            'con': 'constitution',
+            'int': 'intelligence',
+            'wis': 'wisdom',
+            'cha': 'charisma'
+        }
+        
+        # Step 1: Determine primary stat from stat_distribution.csv
+        primary_stat_csv = self._weighted_choice(self.stat_distribution).lower()
+        primary_stat_key = csv_to_full_name.get(primary_stat_csv, primary_stat_csv)
+        
+        # Step 2: Get secondary and dump stats from primary_stat.csv mapping
+        stat_mapping = self.primary_stat_mapping.get(primary_stat_csv)
+        if not stat_mapping:
+            secondary_stat_key = 'wisdom'
+            dump_stat_key = 'intelligence'
+        else:
+            secondary_stat_key = csv_to_full_name.get(stat_mapping['secondary'], stat_mapping['secondary'])
+            dump_stat_key = csv_to_full_name.get(stat_mapping['dump'], stat_mapping['dump'])
+        
+        # Step 3: Roll base stats (4d6 keep highest 3)
+        base_stats = {
+            'strength': roll_4d6_keep_3(),
+            'dexterity': roll_4d6_keep_3(),
+            'constitution': roll_4d6_keep_3(),
+            'intelligence': roll_4d6_keep_3(),
+            'wisdom': roll_4d6_keep_3(),
+            'charisma': roll_4d6_keep_3()
+        }
+        
+        # Step 4: Determine tertiary stat (highest remaining stat after primary, secondary, dump)
+        remaining_stats = [stat for stat in base_stats.keys() if stat not in [primary_stat_key, secondary_stat_key, dump_stat_key]]
+        sorted_remaining = sorted(remaining_stats, key=lambda x: base_stats[x], reverse=True)
+        tertiary_stat_key = sorted_remaining[0]
+        
+        # Step 5: Apply player minimums (Primary 15, Secondary 14, Tertiary 13, others 6, dump 3)
+        minimums_applied = self._apply_player_stat_minimums(base_stats, primary_stat_key, secondary_stat_key, tertiary_stat_key, dump_stat_key)
+        
+        # Step 6: Add random +1 bonuses (3 times, max +2 to any stat)
+        final_stats = self._apply_random_bonuses(minimums_applied)
+        
+        return final_stats, primary_stat_key, secondary_stat_key, dump_stat_key
+    
+    def _apply_player_stat_minimums(self, stats: Dict[str, int], primary_stat: str, secondary_stat: str, tertiary_stat: str, dump_stat: str) -> Dict[str, int]:
+        """Apply player minimums: Primary 15, Secondary 14, Tertiary 13, others 6, dump 3"""
+        final_stats = {}
+        for stat_name, value in stats.items():
+            if stat_name == primary_stat:
+                final_stats[stat_name] = max(value, 15)  # Primary minimum 15
+            elif stat_name == secondary_stat:
+                final_stats[stat_name] = max(value, 14)  # Secondary minimum 14
+            elif stat_name == tertiary_stat:
+                final_stats[stat_name] = max(value, 13)  # Tertiary minimum 13
+            elif stat_name == dump_stat:
+                final_stats[stat_name] = max(value, 3)   # Dump minimum 3
+            else:
+                final_stats[stat_name] = max(value, 6)   # Others minimum 6
+        
+        return final_stats
+    
+    def _apply_random_bonuses(self, stats: Dict[str, int]) -> Dict[str, int]:
+        """Apply 3 random +1 bonuses, max +2 to any single stat"""
+        final_stats = stats.copy()
+        bonus_count = {stat: 0 for stat in stats.keys()}
+        
+        for _ in range(3):
+            # Get stats that haven't reached the +2 limit
+            available_stats = [stat for stat, count in bonus_count.items() if count < 2]
+            if available_stats:
+                chosen_stat = random.choice(available_stats)
+                final_stats[chosen_stat] += 1
+                bonus_count[chosen_stat] += 1
+        
+        return final_stats
+    
     def _get_background_by_stats(self, primary_stat: str, secondary_stat: str) -> str:
         """Get a random background based on primary (75%) or secondary (25%) stat"""
         conn = sqlite3.connect(self.db_path)
@@ -640,6 +725,61 @@ class NPCGenerator:
         
         return origin_feats
     
+    def _generate_player_origin_feats(self, species: str, primary_stat: str) -> List[str]:
+        """Generate player origin feats: 1 guaranteed, 2 if human (50% random, 50% primary stat related)"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Get all origin feats
+        cursor.execute("SELECT feat_name, primary_stat FROM origin_feats")
+        all_feats = cursor.fetchall()
+        conn.close()
+        
+        if not all_feats:
+            return []
+        
+        origin_feats = []
+        
+        # Determine number of feats based on species
+        if species.lower() == 'human':
+            # Humans get 2 guaranteed feats
+            feat_count = 2
+        else:
+            # All other species get 1 guaranteed feat
+            feat_count = 1
+        
+        for _ in range(feat_count):
+            # 50% chance it's random, 50% chance it relates to primary stat
+            if random.random() < 0.5:
+                # Random feat
+                feat_name = random.choice([feat[0] for feat in all_feats])
+            else:
+                # Primary stat related feat
+                # Map full stat names to the format used in origin_feats.csv
+                stat_mapping = {
+                    'strength': 'Strength',
+                    'dexterity': 'Dexterity', 
+                    'constitution': 'Constitution',
+                    'intelligence': 'Intelligence',
+                    'wisdom': 'Wisdom',
+                    'charisma': 'Charisma'
+                }
+                
+                mapped_stat = stat_mapping.get(primary_stat.lower(), primary_stat.title())
+                primary_stat_feats = [feat[0] for feat in all_feats if feat[1] == mapped_stat]
+                
+                if primary_stat_feats:
+                    feat_name = random.choice(primary_stat_feats)
+                else:
+                    # Fallback to random if no primary stat feats found
+                    feat_name = random.choice([feat[0] for feat in all_feats])
+            
+            # Avoid duplicates
+            if feat_name not in origin_feats:
+                origin_feats.append(feat_name)
+        
+        return origin_feats
+    
     def generate_npc(self, use_cultural_name: bool = False, culture: str = None, used_vowels: set = None) -> NPC:
         level = int(self._weighted_choice(self.level_distribution))
         stats, primary_stat, secondary_stat, dump_stat = self._roll_stats()
@@ -659,6 +799,54 @@ class NPCGenerator:
         
         # Generate origin feats
         origin_feats = self._generate_origin_feats(species, primary_stat)
+        
+        npc = NPC(
+            name=name,
+            level=level,
+            strength=stats['strength'],
+            dexterity=stats['dexterity'],
+            constitution=stats['constitution'],
+            intelligence=stats['intelligence'],
+            wisdom=stats['wisdom'],
+            charisma=stats['charisma'],
+            primary_stat=primary_stat,
+            class_type=class_type,
+            class_name=class_name,
+            subclass=subclass,
+            species=species,
+            background=background,
+            traits=traits,
+            origin_feats=origin_feats
+        )
+        
+        return npc
+    
+    def generate_player(self, chosen_species: str = None, use_cultural_name: bool = False, culture: str = None) -> NPC:
+        """Generate a player character with different rules"""
+        level = int(self._weighted_choice(self.level_distribution))
+        stats, primary_stat, secondary_stat, dump_stat = self._roll_player_stats(chosen_species)
+        
+        class_type, class_name, subclass = self._determine_class_info(primary_stat)
+        
+        # Species selection
+        if chosen_species:
+            species = chosen_species.title()
+        else:
+            species = self._weighted_choice(self.species_distribution)
+        
+        background = self._get_background_by_stats(primary_stat, secondary_stat)
+        
+        # Generate name
+        if use_cultural_name and culture:
+            name = self._generate_cultural_name(culture)
+        else:
+            name, _ = self._generate_vowel_name()
+        
+        # Generate traits
+        traits = self._generate_traits()
+        
+        # Generate player origin feats (guaranteed)
+        origin_feats = self._generate_player_origin_feats(species, primary_stat)
         
         npc = NPC(
             name=name,
@@ -828,7 +1016,7 @@ class NPCGenerator:
                 print(f"\nGenerated NPC (ID: {npc_id}):")
                 self.display_npc(npc)
             elif choice == '3':
-                print("\nPlayer character generation not yet implemented.")
+                self._generate_player_menu()
             elif choice == '4':
                 print("\nAre you sure you want to clear all NPCs from the database?")
                 confirm = input("Type 'yes' to confirm: ").strip().lower()
@@ -844,6 +1032,37 @@ class NPCGenerator:
                 break
             else:
                 print("Invalid choice. Please select 1-5.")
+    
+    def _generate_player_menu(self):
+        """Player generation submenu"""
+        print("\n" + "="*40)
+        print("PLAYER CHARACTER GENERATION")
+        print("="*40)
+        print("Choose species:")
+        print("1. Random species")
+        print("2. Human")
+        print("3. Back to main menu")
+        print("="*40)
+        
+        choice = input("Select an option (1-3): ").strip()
+        
+        if choice == '1':
+            # Random species
+            player = self.generate_player()
+            player_id = self.save_npc_to_db(player)
+            print(f"\nGenerated Player Character (ID: {player_id}):")
+            self.display_npc(player)
+        elif choice == '2':
+            # Human
+            player = self.generate_player(chosen_species="Human")
+            player_id = self.save_npc_to_db(player)
+            print(f"\nGenerated Player Character (ID: {player_id}):")
+            self.display_npc(player)
+        elif choice == '3':
+            return  # Back to main menu
+        else:
+            print("Invalid choice. Please select 1-3.")
+            self._generate_player_menu()  # Try again
 
 
 def main():
