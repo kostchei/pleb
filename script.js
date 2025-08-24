@@ -1966,6 +1966,13 @@ class NPCGenerator {
         };
         
         let tarotSection = '';
+        if (character.partyTarot) {
+            tarotSection += `
+                <div class="individual-tarot" style="background: linear-gradient(135deg, #e67e22, #f39c12); margin-bottom: 0.5rem;">
+                    <strong>PARTY - ${character.partyTarot.title}:</strong> ${character.partyTarot.text}
+                </div>
+            `;
+        }
         if (character.individualTarot) {
             tarotSection += `
                 <div class="individual-tarot">
