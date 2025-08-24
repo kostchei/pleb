@@ -1,0 +1,56 @@
+{
+  "Blunt": {
+    "Str": {
+      "classes": ["Fighter", "Warrior", "Champion"],
+      "subclasses": ["Champion", "Banneret", "Cavalier", "Battlemaster", "Samurai", "Gladiator", "Knight", "Weaponmaster", "Sharpshooter"]
+    },
+    "Dex": {
+      "classes": ["Rogue", "Treasure Hunter", "Gunslinger", "Shinobi"],
+      "subclasses": ["Thief", "Assassin", "Burglar", "Agent", "Spy", "Inquisitive", "Mastermind", "Scout", "Swashbuckler", "Deadeye", "Highroller", "White Hat", "Infiltrator", "Saboteur"]
+    },
+    "Con": {
+      "classes": ["Barbarian", "Slayer"],
+      "subclasses": ["Rider", "Foehammer", "Berserker", "Spellscorned", "Battlerager", "Beast"]
+    },
+    "Int": {
+      "classes": ["Sage", "Scholar"],
+      "subclasses": ["Mentat", "Alchemist", "Scribe", "Healing", "Lore"]
+    },
+    "Wis": {
+      "classes": ["Monk", "Wanderer"],
+      "subclasses": ["Open Hand", "Street", "Hunter of Beasts", "Hunter of Shadows", "Forayer"]
+    },
+    "Cha": {
+      "classes": ["Warden", "Captain", "Messenger", "Courtier"],
+      "subclasses": ["Poisoner", "Troubadour", "Counselour", "Herald", "Bounder", "Chieftain", "Thane", "Diplomat", "Investigator"]
+    }
+  },
+  "Caster": {
+    "Wis": {
+      "classes": ["Cleric", "Druid"],
+      "subclasses": ["Life", "Light", "Trickery", "War", "Apocalypse", "Harvest", "Land", "Moon", "Sea", "Stars", "Old Ways", "Symbiote", "Wicker"]
+    },
+    "Int": {
+      "classes": ["Wizard", "Ritualist"],
+      "subclasses": ["Abjurer","Diviner", "Evoker", "Illusionist", "Bibliomancy", "Occultist", "Philosopher", "Artisan", "Elementalist", "Conjurer", "Enchanter", "Necromancer", "Transmuter", "Bladesinging"]
+    },
+    "Cha": {
+      "classes": ["Warlock", "Sorcerer", "Bard"],
+      "subclasses": ["Dance", "Lore", "Valor","Glamour", "Drama", "Wild Magic", "Templar", "Draconic", "Aberrant", "Crimson", "Hungering Dark","Great Fool", "Horned King", "Archfey", "Infernal", "Undead", "Celestial", "Great Old One", "Exalted Assembly of the Feline Court"]
+    }
+  },
+  "Semi Caster": {
+    "Wis": {
+      "classes": ["Ranger", "Bushi", "Barbarian", "Monk"],
+      "subclasses": ["Trail Warden", "Hunter",  "Armsmaster", "Protector", "Vanguard", "Wild Heart", "World Tree", "Mercy", "Tattoed Warrior", "Shadow", "Elements", "Cosmic Balance" ]
+    },
+    "Int": {
+      "classes": ["Binder", "Rogue", "Fighter"],
+      "subclasses": ["Knight of the Sacred Seal", "Anima Mage", "Tenebrous Apostate", "Scion of Dantalion", "Eldritch Knight", "Arcane Archer", "Arcane Trickster"]
+    },
+    "Cha": {
+      "classes": ["Paladin", "Duelist"],
+      "subclasses": ["Devotion", "Glory", "Ancients", "Vengeance", "Castigation", "Guardian", "Blademaster", "Adept", "Death Dancer"]
+    }
+  }
+}

@@ -1,0 +1,7 @@
+Primary,Secondary,Dump
+Str,Wis,Int
+Dex,Cha,Wis
+Con,Dex,Wis
+Cha,Int,Con
+Int ,Wis,Str
+Wis,Con,Dex
