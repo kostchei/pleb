@@ -1,0 +1,434 @@
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    min-height: 100vh;
+    color: #333;
+    padding: 15% 15% 5% 15%; /* 15% border around the whole app */
+}
+
+/* Main app container */
+.app-container {
+    display: flex;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    min-height: 70vh;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+/* Left Menu Panel */
+.menu-panel {
+    width: 280px;
+    background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.menu-panel h1 {
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #ecf0f1;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 1rem;
+}
+
+.menu-section h2 {
+    font-size: 1rem;
+    color: #bdc3c7;
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.menu-btn {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.menu-btn.primary {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: white;
+}
+
+.menu-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(52, 152, 219, 0.4);
+}
+
+.menu-btn:not(.primary):not(.secondary):not(.danger) {
+    background: #34495e;
+    color: #ecf0f1;
+    border: 1px solid #4a5f7a;
+}
+
+.menu-btn:not(.primary):not(.secondary):not(.danger):hover {
+    background: #4a5f7a;
+    transform: translateY(-1px);
+}
+
+.menu-btn.secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.menu-btn.secondary:hover {
+    background: #7f8c8d;
+    transform: translateY(-1px);
+}
+
+.menu-btn.danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.menu-btn.danger:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    color: #ecf0f1;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #3498db;
+}
+
+.info-text {
+    color: #bdc3c7;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.info-text p {
+    margin-bottom: 0.5rem;
+}
+
+/* Main Content Area */
+.content-area {
+    flex: 1;
+    padding: 2rem;
+    background: #f8f9fa;
+    overflow-y: auto;
+}
+
+/* Tarot Section */
+.tarot-section {
+    background: linear-gradient(135deg, #8e44ad, #9b59b6);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 16px rgba(142, 68, 173, 0.3);
+}
+
+.tarot-section h2 {
+    margin-bottom: 1rem;
+    text-align: center;
+    font-size: 1.5rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.tarot-card {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    text-align: center;
+    backdrop-filter: blur(5px);
+}
+
+/* Character Grid */
+.character-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    min-height: 500px;
+}
+
+.character-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.character-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+    border-color: #3498db;
+}
+
+.character-card.player-character {
+    border-color: #f39c12;
+    background: linear-gradient(135deg, #fff 0%, #fff9e6 100%);
+}
+
+.character-card.player-character::before {
+    content: "PLAYER";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #f39c12;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.character-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 0.8rem;
+}
+
+.character-name {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.character-level {
+    background: #3498db;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.character-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #34495e;
+}
+
+.info-value {
+    color: #2c3e50;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    margin: 1rem 0;
+    padding: 0.8rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.stat-item {
+    text-align: center;
+    font-size: 0.85rem;
+}
+
+.stat-label {
+    display: block;
+    font-weight: bold;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-top: 2px;
+}
+
+.traits-section, .feats-section {
+    margin-top: 1rem;
+    padding: 0.8rem;
+    background: #f1f2f6;
+    border-radius: 8px;
+}
+
+.section-title {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #34495e;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.traits-list, .feats-list {
+    font-size: 0.85rem;
+    color: #2c3e50;
+    line-height: 1.3;
+}
+
+.individual-tarot {
+    margin-top: 1rem;
+    padding: 0.8rem;
+    background: linear-gradient(135deg, #8e44ad, #9b59b6);
+    color: white;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+/* Empty slot styling */
+.empty-slot {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ecf0f1, #bdc3c7);
+    border-radius: 12px;
+    padding: 3rem;
+    text-align: center;
+    color: #34495e;
+    border: 3px dashed #95a5a6;
+}
+
+.empty-text h3 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.empty-text p {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    color: white;
+}
+
+.loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #34495e;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+.loading-overlay p {
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Utility classes */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+    body {
+        padding: 10% 10% 5% 10%;
+    }
+    
+    .character-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 5% 5% 5% 5%;
+    }
+    
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .menu-panel {
+        width: 100%;
+        padding: 1.5rem;
+    }
+    
+    .character-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Scrollbar styling */
+.content-area::-webkit-scrollbar {
+    width: 8px;
+}
+
+.content-area::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.content-area::-webkit-scrollbar-thumb {
+    background: #3498db;
+    border-radius: 4px;
+}
+
+.content-area::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+}
