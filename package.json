@@ -1,0 +1,13 @@
+{
+  "name": "pleb-generator",
+  "version": "1.0.0",
+  "description": "NPC and Player Character Generator for D&D",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build needed - static HTML app'",
+    "build:azure": "echo 'No build needed - static HTML app'"
+  },
+  "keywords": ["dnd", "npc", "generator", "character"],
+  "author": "Your Name",
+  "license": "MIT"
+}
