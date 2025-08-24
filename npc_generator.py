@@ -27,9 +27,10 @@ class NPC:
 
 
 class NPCGenerator:
-    def __init__(self, db_path: str = "npcs.db", classes_file: str = "classes.json"):
+    def __init__(self, db_path: str = "npcs.db", classes_file: str = "classes.json", cards_file: str = "cards.json"):
         self.db_path = db_path
         self.classes_data = self._load_classes_data(classes_file)
+        self.cards_data = self._load_cards_data(cards_file)
         self._setup_database()
         self._migrate_csv_to_db()
         self.level_distribution = self._load_distribution_from_db("level_distribution", "level")
@@ -63,6 +64,10 @@ class NPCGenerator:
     
     def _load_classes_data(self, filename: str) -> Dict:
         with open(filename, 'r') as file:
+            return json.load(file)
+    
+    def _load_cards_data(self, filename: str) -> List[Dict]:
+        with open(filename, 'r', encoding='utf-8') as file:
             return json.load(file)
     
     def _weighted_choice(self, distribution: List[Tuple[str, float]]) -> str:
@@ -225,6 +230,61 @@ class NPCGenerator:
                 bonus_count[chosen_stat] += 1
         
         return final_stats
+    
+    def _draw_tarot_card(self) -> Tuple[str, str, str]:
+        """Draw a random tarot card and return (title, meaning_type, meaning_text)"""
+        # Select random card
+        card = random.choice(self.cards_data)
+        title = card["title"]
+        
+        # Roll 1d10 to determine orientation and meaning
+        roll = random.randint(1, 10)
+        
+        # 1-5 = upright, 6-10 = reversed
+        if roll <= 5:
+            meanings = card["upright_meaning"]
+            orientation = "upright"
+        else:
+            meanings = card["reversed_meaning"]
+            orientation = "reversed"
+        
+        # Select which meaning type based on the roll
+        meaning_types = list(meanings.keys())
+        if roll in [1, 6]:
+            meaning_type = "person"
+        elif roll in [2, 7]:
+            meaning_type = "creature_or_trap"
+        elif roll in [3, 8]:
+            meaning_type = "place"
+        elif roll in [4, 9]:
+            meaning_type = "treasure"
+        else:  # roll in [5, 10]
+            meaning_type = "situation"
+        
+        # Get the actual meaning text
+        meaning_text = meanings.get(meaning_type, "")
+        
+        return title, f"{orientation} - {meaning_type}", meaning_text
+    
+    def _display_simple_tarot(self):
+        """Display a simple tarot card without fancy formatting"""
+        title, meaning_type, meaning_text = self._draw_tarot_card()
+        print(f"{title}: {meaning_text}")
+    
+    def _display_tarot_reading(self, num_cards: int, reading_type: str = "Group"):
+        """Display tarot reading for group or individual"""
+        print(f"\n{'='*50}")
+        print(f"TAROT READING - {reading_type.upper()}")
+        print(f"{'='*50}")
+        
+        for i in range(num_cards):
+            title, meaning_type, meaning_text = self._draw_tarot_card()
+            card_num = f"Card {i+1}: " if num_cards > 1 else ""
+            print(f"{card_num}{title}")
+            print(f"{meaning_type.title()}: {meaning_text}")
+            if i < num_cards - 1:
+                print("-" * 50)
+        print(f"{'='*50}")
     
     def _get_background_by_stats(self, primary_stat: str, secondary_stat: str) -> str:
         """Get a random background based on primary (75%) or secondary (25%) stat"""
@@ -944,7 +1004,14 @@ class NPCGenerator:
             print(f"{cultural_members} member(s) will be from {chosen_culture.title()} culture")
         print()
         
+        # Display party tarot card at the top
+        self._display_simple_tarot()
+        print()
+        
         used_vowels = set()
+        
+        # Choose a random party member to get the individual tarot card
+        tarot_member_index = random.randint(0, party_size - 1)
         
         for i in range(party_size):
             # First cultural_members get cultural names, rest get vowel names
@@ -967,8 +1034,12 @@ class NPCGenerator:
             culture_note = f" ({chosen_culture.title()})" if use_cultural else ""
             print(f"Party Member {i+1} (ID: {npc_id}){culture_note}:")
             self.display_npc(npc)
+            
+            # Add tarot card for the randomly selected party member
+            if i == tarot_member_index:
+                self._display_simple_tarot()
+            
             print()
-        
         return party
     
     def display_npc(self, npc: NPC):
@@ -1015,6 +1086,9 @@ class NPCGenerator:
                 npc_id = self.save_npc_to_db(npc)
                 print(f"\nGenerated NPC (ID: {npc_id}):")
                 self.display_npc(npc)
+                
+                # Individual gets 2 tarot cards
+                self._display_tarot_reading(2, f"Individual NPC ({npc.name})")
             elif choice == '3':
                 self._generate_player_menu()
             elif choice == '4':
@@ -1052,12 +1126,18 @@ class NPCGenerator:
             player_id = self.save_npc_to_db(player)
             print(f"\nGenerated Player Character (ID: {player_id}):")
             self.display_npc(player)
+            
+            # Player gets 2 tarot cards
+            self._display_tarot_reading(2, f"Player Character ({player.name})")
         elif choice == '2':
             # Human
             player = self.generate_player(chosen_species="Human")
             player_id = self.save_npc_to_db(player)
             print(f"\nGenerated Player Character (ID: {player_id}):")
             self.display_npc(player)
+            
+            # Player gets 2 tarot cards
+            self._display_tarot_reading(2, f"Player Character ({player.name})")
         elif choice == '3':
             return  # Back to main menu
         else:
