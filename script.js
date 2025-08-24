@@ -71,57 +71,99 @@ class NPCGenerator {
             { name: 'Savage Attacker', primaryStat: 'Strength' }
         ];
         
-        // Load card data (will be loaded from external file)
-        this.loadCardData();
+        // Load card data directly (embedded to avoid CORS issues)
+        this.cardData = this.getCardData();
     }
     
-    async loadCardData() {
-        try {
-            const response = await fetch('cards.json');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            this.cardData = await response.json();
-            console.log(`Loaded ${this.cardData.length} tarot cards`);
-        } catch (error) {
-            console.warn('Could not load card data, using fallback:', error);
-            this.cardData = [
-                {
-                    title: "BALANCE",
-                    upright_meaning: {
-                        person: "A fair-minded person who can see multiple perspectives.",
-                        creature_or_trap: "A trap, a Beast, a Construct, or an otherwise impartial foe.",
-                        place: "A place where different forces exist in balance.",
-                        treasure: "A treasure with value to two competing factions.",
-                        situation: "A situation where maintaining balance is important."
-                    },
-                    reversed_meaning: {
-                        person: "A judgmental person ignoring one perspective.",
-                        creature_or_trap: "A Celestial, a Fiend, or some other creature strongly associated with alignment.",
-                        place: "A place where the balance has been upset.",
-                        treasure: "A treasure valuable only to certain people.",
-                        situation: "Something being over- or undervalued."
-                    }
+    getCardData() {
+        // Embedded card data to avoid CORS issues
+        return [
+            {
+                title: "BALANCE",
+                upright_meaning: {
+                    person: "A fair-minded person who can see multiple perspectives and judge impartially.",
+                    creature_or_trap: "A trap, a Beast, a Construct, or an otherwise impartial foe.",
+                    place: "A place where different forces exist in balance—such as a civilization in balance with nature.",
+                    treasure: "A treasure with value to two competing factions, or with two equal magical powers.",
+                    situation: "A situation where maintaining balance is important: keeping rivals satisfied, preserving the balance of power."
                 },
-                {
-                    title: "BEAST", 
-                    upright_meaning: {
-                        person: "A person who avoids the comforts of civilization.",
-                        creature_or_trap: "A Beast, or a similar animal-like creature.",
-                        place: "A place where animals roam freely.",
-                        treasure: "A treasure that incorporates fur, feathers, bones, or claws.",
-                        situation: "A situation involving hunting animals."
-                    },
-                    reversed_meaning: {
-                        person: "A person who fiercely represses bestial urges.",
-                        creature_or_trap: "A domesticated animal or a familiar.",
-                        place: "A place where animals are contained, such as a farm.",
-                        treasure: "An ornate saddle, goad, or item for domestic animals.",
-                        situation: "Domestic animals rebelling against control."
-                    }
+                reversed_meaning: {
+                    person: "A judgmental or biased person willfully ignoring one perspective in favor of another.",
+                    creature_or_trap: "A Celestial, a Fiend, or some other creature strongly associated with a particular alignment.",
+                    place: "A place where the balance of elemental or natural forces has been upset, with negative consequences.",
+                    treasure: "A treasure valuable only to certain people, or that can be used only in a very specific way.",
+                    situation: "Something being over- or undervalued."
                 }
-            ];
-        }
+            },
+            {
+                title: "BEAST",
+                upright_meaning: {
+                    person: "A person who avoids the comforts of civilization or indulges predatory attitudes.",
+                    creature_or_trap: "A Beast, or a similar creature (such as a Fey or a Monstrosity) that is animal-like; alternatively, a pit or other confined space with a trapped animal within.",
+                    place: "A place where animals roam freely.",
+                    treasure: "A treasure that incorporates fur, feathers, bones, or claws from a Beast, or a magic item that allows transformation into a Beast (such as a Cloak of the Bat or Staff of the Python).",
+                    situation: "A situation involving hunting animals or animals preying on people."
+                },
+                reversed_meaning: {
+                    person: "A person who fiercely represses urges they deem 'bestial' in themselves or others.",
+                    creature_or_trap: "A domesticated animal or a familiar.",
+                    place: "A place where animals are contained, such as a farm or a zoo.",
+                    treasure: "An ornate saddle, a goad, or another item related to the use of domestic animals, or a magic item that allows control of Beasts (such as a Potion of Animal Friendship).",
+                    situation: "Domestic animals rebelling against people's control."
+                }
+            },
+            {
+                title: "BOOK",
+                upright_meaning: {
+                    person: "A writer, poet, or compulsive note-taker.",
+                    creature_or_trap: "A creature that keeps an exhaustive diary in some form, or that seeks a scribe to record its deeds.",
+                    place: "A scriptorium or printing press.",
+                    treasure: "A valuable or magical pen, an ink vial, or a set of pigments (such as Nolzur's Marvelous Pigments).",
+                    situation: "A situation that requires gleaning information from written clues."
+                },
+                reversed_meaning: {
+                    person: "A well-educated person who reads often.",
+                    creature_or_trap: "A trap involving written runes (such as a Glyph of Warding or Symbol spell).",
+                    place: "A library or archive.",
+                    treasure: "A spellbook, a manual that increases an ability score, or another book with magical properties.",
+                    situation: "A situation involving censorship or book burning."
+                }
+            },
+            {
+                title: "COMET",
+                upright_meaning: {
+                    person: "A person who heralds a new age or brings significant change.",
+                    creature_or_trap: "A creature from the far realm or outer planes.",
+                    place: "A place touched by cosmic forces or celestial events.",
+                    treasure: "A meteorite, star metal weapon, or item of cosmic significance.",
+                    situation: "A rare celestial event or prophecy coming to pass."
+                },
+                reversed_meaning: {
+                    person: "A person clinging to the old ways, resistant to change.",
+                    creature_or_trap: "A creature corrupted by cosmic forces.",
+                    place: "A place scarred by celestial impact or cosmic disaster.",
+                    treasure: "A cursed item of stellar origin.",
+                    situation: "A missed opportunity or failed prophecy."
+                }
+            },
+            {
+                title: "CROWN",
+                upright_meaning: {
+                    person: "A ruler, leader, or person of high social standing.",
+                    creature_or_trap: "A creature that rules over others of its kind.",
+                    place: "A palace, throne room, or seat of power.",
+                    treasure: "A crown, scepter, or other regalia of office.",
+                    situation: "A situation involving politics, succession, or the exercise of authority."
+                },
+                reversed_meaning: {
+                    person: "A person who has lost or rejected authority, or who rebels against established power.",
+                    creature_or_trap: "A creature that has been dethroned or cast out from its position.",
+                    place: "A ruined palace or abandoned seat of power.",
+                    treasure: "A broken crown or symbol of fallen authority.",
+                    situation: "A revolution, coup, or the collapse of established order."
+                }
+            }
+        ];
     }
     
     bindEvents() {
@@ -241,9 +283,8 @@ class NPCGenerator {
     generateBasicInfo() {
         const level = parseInt(this.weightedChoice(this.levelDistribution));
         const species = this.weightedChoice(this.speciesDistribution);
-        const name = this.generateName();
         
-        return { level, species, name };
+        return { level, species };
     }
     
     generateClassInfo(primaryStat) {
