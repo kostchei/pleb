@@ -1,3 +1,12 @@
+/* Custom font import */
+@font-face {
+    font-family: 'CaslonAntique';
+    src: url('data/CaslonAntique.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* Reset and base styles */
 * {
     margin: 0;
@@ -6,7 +15,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'CaslonAntique', 'Times New Roman', serif;
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     min-height: 100vh;
     color: #333;
