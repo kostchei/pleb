@@ -4,8 +4,8 @@
   "description": "NPC and Player Character Generator for D&D",
   "main": "index.html",
   "scripts": {
-    "build": "echo 'No build needed - static HTML app'",
-    "build:azure": "echo 'No build needed - static HTML app'"
+    "build": "mkdir -p dist && cp *.html *.css *.js *.json dist/ 2>/dev/null || true",
+    "build:azure": "mkdir -p dist && cp *.html *.css *.js *.json dist/ 2>/dev/null || true"
   },
   "keywords": ["dnd", "npc", "generator", "character"],
   "author": "Your Name",
