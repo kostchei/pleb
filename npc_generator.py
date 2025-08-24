@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 @dataclass
 class NPC:
+    name: str
     level: int
     strength: int
     dexterity: int
@@ -21,6 +22,7 @@ class NPC:
     subclass: Optional[str]
     species: str
     background: str
+    traits: List[str]
 
 
 class NPCGenerator:
@@ -216,6 +218,7 @@ class NPCGenerator:
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS npcs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
                 level INTEGER,
                 strength INTEGER,
                 dexterity INTEGER,
@@ -229,6 +232,7 @@ class NPCGenerator:
                 subclass TEXT,
                 species TEXT,
                 background TEXT,
+                traits TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -263,6 +267,13 @@ class NPCGenerator:
             )
         ''')
         
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS traits (
+                virtue TEXT,
+                vice TEXT
+            )
+        ''')
+        
         # Check if new columns exist and add them if they don't
         cursor.execute("PRAGMA table_info(npcs)")
         columns = [column[1] for column in cursor.fetchall()]
@@ -275,6 +286,12 @@ class NPCGenerator:
         
         if 'background' not in columns:
             cursor.execute('ALTER TABLE npcs ADD COLUMN background TEXT')
+        
+        if 'name' not in columns:
+            cursor.execute('ALTER TABLE npcs ADD COLUMN name TEXT')
+        
+        if 'traits' not in columns:
+            cursor.execute('ALTER TABLE npcs ADD COLUMN traits TEXT')
         
         # Check if backgrounds table needs secondary_stat column
         cursor.execute("PRAGMA table_info(backgrounds)")
@@ -336,10 +353,147 @@ class NPCGenerator:
                         cursor.execute("INSERT INTO backgrounds (background, primary_stat, secondary_stat) VALUES (?, ?, ?)", 
                                      (row[0], row[1], row[2]))
         
+        cursor.execute("SELECT COUNT(*) FROM traits")
+        if cursor.fetchone()[0] == 0:
+            # Migrate traits
+            with open("traits.csv", 'r') as file:
+                reader = csv.reader(file)
+                next(reader)  # Skip header
+                for row in reader:
+                    if len(row) >= 2 and row[0] and row[1]:
+                        cursor.execute("INSERT INTO traits (virtue, vice) VALUES (?, ?)", 
+                                     (row[0], row[1]))
+        
         conn.commit()
         conn.close()
     
-    def generate_npc(self) -> NPC:
+    def _load_vowel_names(self) -> Dict[str, List[str]]:
+        """Load names from vowel_names.csv grouped by vowel"""
+        vowel_names = {'A': [], 'E': [], 'I': [], 'O': [], 'U': []}
+        with open("vowel_names.csv", 'r') as file:
+            reader = csv.reader(file)
+            next(reader)  # Skip header
+            for row in reader:
+                if len(row) >= 2 and row[0] and row[1]:
+                    vowel, name = row[0], row[1]
+                    if vowel in vowel_names:
+                        vowel_names[vowel].append(name)
+        return vowel_names
+    
+    def _generate_cultural_name(self, culture: str) -> str:
+        """Generate a name based on cultural syllables (simplified Python version)"""
+        cultures = {
+            'aquilonian': {
+                'male_starts': ["Ar", "Ca", "Mer", "Mor", "Per", "Lan", "Vi", "Ig", "Ka"],
+                'male_ends': ["gon", "loc", "lon", "din", "der", "lan", "thur", "gaw"],
+                'female_starts': ["An", "Mor", "Gua", "Hel", "Is", "Ela", "Vi", "Gly", "Ca"],
+                'female_ends': ["wen", "lin", "vyr", "min", "sir", "lott", "ryn", "dell"],
+                'preset_names': ["Lancelot", "Gawain", "Percival", "Guinevere", "Morgan", "Elaine"]
+            },
+            'barbarian': {
+                'male_starts': ["Kon", "Grom", "Bru", "Thor", "Ulf", "Rag", "Bor", "Grimm"],
+                'male_ends': ["an", "gar", "ulf", "grim", "lok", "thor", "bane", "axe"],
+                'female_starts': ["Val", "Sig", "Frey", "Ing", "Ast", "Ran", "Sol", "Bri"],
+                'female_ends': ["rid", "run", "dis", "wyn", "hild", "gard", "borg", "dís"],
+                'preset_names': ["Conan", "Valeria", "Thulsa", "Belit", "Subotai", "Thorgrim"]
+            },
+            'lusitania': {
+                'male_starts': ["Car", "Fer", "Al", "Rod", "San", "Gon", "Die", "Pedr"],
+                'male_ends': ["los", "nando", "dro", "rico", "tiago", "mingo", "berto"],
+                'female_starts': ["Mar", "Isa", "Cat", "Con", "Ter", "Lu", "Clar", "Bea"],
+                'female_ends': ["ía", "bella", "ncia", "suela", "mén", "cedes", "lores"],
+                'preset_names': ["Carlos", "Fernando", "Isabella", "Esperanza", "Diego", "Carmen"]
+            },
+            'oriental': {
+                'male_starts': ["Li", "Wang", "Chen", "Zhang", "Liu", "Yang", "Huang", "Zhao"],
+                'male_ends': ["wei", "ming", "feng", "jun", "hao", "ping", "gang", "lei"],
+                'female_starts': ["Li", "Wang", "Chen", "Liu", "Yang", "Zhou", "Wu", "Xu"],
+                'female_ends': ["na", "ying", "fang", "mei", "lan", "yan", "xin", "hui"],
+                'preset_names': ["Li Wei", "Wang Ming", "Chen Mei", "Liu Yan", "Zhang Feng", "Yang Lan"]
+            },
+            'qharan': {
+                'male_starts': ["Ab", "Ibn", "Mu", "Al", "Ha", "Sa", "Om", "Kha"],
+                'male_ends': ["med", "mad", "san", "lim", "tar", "rim", "eed", "bad"],
+                'female_starts': ["Fat", "Ay", "Zay", "Leil", "Jas", "Sor", "Nal", "Zul"],
+                'female_ends': ["ima", "sha", "nab", "ara", "eika", "orah", "ina", "ida"],
+                'preset_names': ["Ahmed", "Hassan", "Fatima", "Aisha", "Omar", "Leila"]
+            }
+        }
+        
+        if culture not in cultures:
+            return "Unknown"
+        
+        culture_data = cultures[culture]
+        
+        # 50% chance for preset name, 50% for generated
+        if random.random() < 0.5 and culture_data['preset_names']:
+            return random.choice(culture_data['preset_names'])
+        
+        # Generate name from syllables (assume 50/50 male/female for simplicity)
+        is_male = random.random() < 0.5
+        if is_male:
+            start = random.choice(culture_data['male_starts'])
+            end = random.choice(culture_data['male_ends'])
+        else:
+            start = random.choice(culture_data['female_starts'])  
+            end = random.choice(culture_data['female_ends'])
+        
+        return start + end
+    
+    def _generate_vowel_name(self, used_vowels: set = None) -> Tuple[str, str]:
+        """Generate a name from vowel_names.csv, avoiding already used vowels"""
+        vowel_names = self._load_vowel_names()
+        available_vowels = [v for v in vowel_names.keys() if used_vowels is None or v not in used_vowels]
+        
+        if not available_vowels:
+            # If all vowels used, pick randomly
+            available_vowels = list(vowel_names.keys())
+        
+        chosen_vowel = random.choice(available_vowels)
+        name = random.choice(vowel_names[chosen_vowel])
+        return name, chosen_vowel
+    
+    def _generate_traits(self) -> List[str]:
+        """Generate 2-4 traits with at least 1 virtue and 1 vice"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT virtue, vice FROM traits")
+        trait_pairs = cursor.fetchall()
+        conn.close()
+        
+        if not trait_pairs:
+            return ["Honest", "Deceitful"]  # Fallback if no traits in database
+        
+        # Collect all virtues and vices
+        virtues = [pair[0] for pair in trait_pairs if pair[0]]
+        vices = [pair[1] for pair in trait_pairs if pair[1]]
+        
+        # Determine total number of traits (2-4)
+        total_traits = random.randint(2, 4)
+        
+        # Must have at least 1 virtue and 1 vice
+        selected_traits = []
+        
+        # Always pick at least one virtue and one vice
+        selected_traits.append(random.choice(virtues))
+        selected_traits.append(random.choice(vices))
+        
+        # Fill remaining slots randomly
+        remaining_slots = total_traits - 2
+        all_available_traits = virtues + vices
+        
+        # Remove already selected traits to avoid duplicates
+        available_traits = [trait for trait in all_available_traits if trait not in selected_traits]
+        
+        for _ in range(remaining_slots):
+            if available_traits:
+                selected_trait = random.choice(available_traits)
+                selected_traits.append(selected_trait)
+                available_traits.remove(selected_trait)
+        
+        return selected_traits
+    
+    def generate_npc(self, use_cultural_name: bool = False, culture: str = None, used_vowels: set = None) -> NPC:
         level = int(self._weighted_choice(self.level_distribution))
         stats = self._roll_stats()
         
@@ -352,7 +506,17 @@ class NPCGenerator:
         species = self._weighted_choice(self.species_distribution)
         background = self._get_background_by_stats(primary_stat, secondary_stat)
         
+        # Generate name
+        if use_cultural_name and culture:
+            name = self._generate_cultural_name(culture)
+        else:
+            name, _ = self._generate_vowel_name(used_vowels)
+        
+        # Generate traits
+        traits = self._generate_traits()
+        
         npc = NPC(
+            name=name,
             level=level,
             strength=stats['strength'],
             dexterity=stats['dexterity'],
@@ -365,7 +529,8 @@ class NPCGenerator:
             class_name=class_name,
             subclass=subclass,
             species=species,
-            background=background
+            background=background,
+            traits=traits
         )
         
         return npc
@@ -374,13 +539,14 @@ class NPCGenerator:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO npcs (level, strength, dexterity, constitution, intelligence, 
-                            wisdom, charisma, primary_stat, class_type, class_name, subclass, species, background)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO npcs (name, level, strength, dexterity, constitution, intelligence, 
+                            wisdom, charisma, primary_stat, class_type, class_name, subclass, species, background, traits)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            npc.level, npc.strength, npc.dexterity, npc.constitution,
+            npc.name, npc.level, npc.strength, npc.dexterity, npc.constitution,
             npc.intelligence, npc.wisdom, npc.charisma, npc.primary_stat,
-            npc.class_type, npc.class_name, npc.subclass, npc.species, npc.background
+            npc.class_type, npc.class_name, npc.subclass, npc.species, npc.background,
+            ", ".join(npc.traits)
         ))
         npc_id = cursor.lastrowid
         conn.commit()
@@ -412,14 +578,41 @@ class NPCGenerator:
         party_size = self.generate_party_size()
         party = []
         
+        # Determine number of cultural members (1d7-1, so 0-6)
+        cultural_members = random.randint(1, 7) - 1
+        cultural_members = min(cultural_members, party_size)  # Can't exceed party size
+        
+        # Choose a random culture for cultural members
+        cultures = ['aquilonian', 'barbarian', 'lusitania', 'oriental', 'qharan']
+        chosen_culture = random.choice(cultures)
+        
         print(f"Generating party of {party_size} members...")
+        if cultural_members > 0:
+            print(f"{cultural_members} member(s) will be from {chosen_culture.title()} culture")
         print()
         
+        used_vowels = set()
+        
         for i in range(party_size):
-            npc, npc_id = self.generate_and_save_npc()
+            # First cultural_members get cultural names, rest get vowel names
+            use_cultural = i < cultural_members
+            culture = chosen_culture if use_cultural else None
+            
+            if use_cultural:
+                npc = self.generate_npc(use_cultural_name=True, culture=culture)
+            else:
+                npc = self.generate_npc(used_vowels=used_vowels)
+                # Track used vowel for vowel name generation
+                if npc.name:
+                    first_letter = npc.name[0].upper()
+                    if first_letter in 'AEIOU':
+                        used_vowels.add(first_letter)
+            
+            npc_id = self.save_npc_to_db(npc)
             party.append((npc, npc_id))
             
-            print(f"Party Member {i+1} (ID: {npc_id}):")
+            culture_note = f" ({chosen_culture.title()})" if use_cultural else ""
+            print(f"Party Member {i+1} (ID: {npc_id}){culture_note}:")
             self.display_npc(npc)
             print()
         
@@ -427,12 +620,15 @@ class NPCGenerator:
     
     def display_npc(self, npc: NPC):
         """Display NPC information"""
+        print(f"Name: {npc.name}")
         print(f"Level: {npc.level}")
         print(f"Species: {npc.species}")
         print(f"Stats: STR {npc.strength}, DEX {npc.dexterity}, CON {npc.constitution}")
         print(f"       INT {npc.intelligence}, WIS {npc.wisdom}, CHA {npc.charisma}")
         print(f"Primary Stat: {npc.primary_stat.title()}")
         print(f"Background: {npc.background}")
+        if npc.traits:
+            print(f"Traits: {', '.join(npc.traits)}")
         if npc.class_type:
             print(f"Class Type: {npc.class_type.title()}")
         else:
@@ -459,7 +655,8 @@ class NPCGenerator:
             if choice == '1':
                 self.generate_party()
             elif choice == '2':
-                npc, npc_id = self.generate_and_save_npc()
+                npc = self.generate_npc()
+                npc_id = self.save_npc_to_db(npc)
                 print(f"\nGenerated NPC (ID: {npc_id}):")
                 self.display_npc(npc)
             elif choice == '3':
