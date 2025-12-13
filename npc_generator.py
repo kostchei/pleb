@@ -630,7 +630,7 @@ class NPCGenerator:
                 'male_ends': ["an", "gar", "ulf", "grim", "lok", "thor", "bane", "axe"],
                 'female_starts': ["Val", "Sig", "Frey", "Ing", "Ast", "Ran", "Sol", "Bri"],
                 'female_ends': ["rid", "run", "dis", "wyn", "hild", "gard", "borg", "dís"],
-                'preset_names': ["Conan", "Valeria", "Thulsa", "Belit", "Subotai", "Thorgrim"]
+                'preset_names': []
             },
             'lusitania': {
                 'male_starts': ["Car", "Fer", "Al", "Rod", "San", "Gon", "Die", "Pedr"],
