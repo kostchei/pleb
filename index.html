@@ -1,24 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pleb Generator - NPC & Player Character Creator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="app-container">
         <!-- Left Menu -->
         <aside class="menu-panel">
             <h1>Pleb Generator</h1>
-            
+
             <div class="menu-section">
                 <h2>Generate</h2>
                 <button id="generate-party" class="menu-btn primary">Generate Party</button>
                 <button id="generate-individual" class="menu-btn">Generate Individual</button>
                 <button id="generate-player" class="menu-btn">Generate Player</button>
             </div>
-            
+
             <div class="menu-section">
                 <h2>Player Options</h2>
                 <label class="checkbox-label">
@@ -26,13 +28,13 @@
                     Force Human
                 </label>
             </div>
-            
+
             <div class="menu-section">
                 <h2>Actions</h2>
                 <button id="clear-screen" class="menu-btn secondary">Clear Screen</button>
                 <button id="clear-database" class="menu-btn danger">Clear Database</button>
             </div>
-            
+
             <div class="menu-section">
                 <h2>Region</h2>
                 <select id="region-select" class="menu-select">
@@ -44,7 +46,7 @@
                     <option value="qharan">Qharan</option>
                 </select>
             </div>
-            
+
             <div class="menu-section">
                 <h2>Info</h2>
                 <div class="info-text">
@@ -53,7 +55,7 @@
                 </div>
             </div>
         </aside>
-        
+
         <!-- Main Content Area -->
         <main class="content-area">
             <!-- Tarot Card Display -->
@@ -61,7 +63,7 @@
                 <h2>Tarot Reading</h2>
                 <div id="tarot-card" class="tarot-card"></div>
             </div>
-            
+
             <!-- Character Grid -->
             <div class="character-grid" id="character-grid">
                 <!-- Characters will be dynamically inserted here -->
@@ -74,15 +76,16 @@
             </div>
         </main>
     </div>
-    
+
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay hidden">
         <div class="loading-spinner"></div>
         <p>Rolling the dice...</p>
     </div>
-    
+
     <script src="data/cards.json" type="application/json"></script>
     <script src="data/classes.json" type="application/json"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
+
 </html>

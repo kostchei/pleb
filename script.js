@@ -1,4 +1,9 @@
 // NPC Generator Web App
+import generateAquilonianName from './nameGenerators/aquilonianNames.js';
+import generateBarbarianName from './nameGenerators/barbarianNames.js';
+import generateLusitanianName from './nameGenerators/lusitaniaNames.js';
+import generateOrientalName from './nameGenerators/orientalNames.js';
+import generateQharanName from './nameGenerators/qharanNames.js';
 class NPCGenerator {
     constructor() {
         this.characters = [];
@@ -1541,67 +1546,17 @@ class NPCGenerator {
     }
 
     generateCulturalName(culture) {
-        // Cultural name generation from the original script
-        const cultures = {
-            'aquilonian': {
-                'male_starts': ["Ar", "Ca", "Mer", "Mor", "Per", "Lan", "Vi", "Ig", "Ka"],
-                'male_ends': ["gon", "loc", "lon", "din", "der", "lan", "thur", "gaw"],
-                'female_starts': ["An", "Mor", "Gua", "Hel", "Is", "Ela", "Vi", "Gly", "Ca"],
-                'female_ends': ["wen", "lin", "vyr", "min", "sir", "lott", "ryn", "dell"],
-                'preset_names': ["Lancelot", "Gawain", "Percival", "Guinevere", "Morgan", "Elaine"]
-            },
-            'barbarian': {
-                'male_starts': ["Kon", "Grom", "Bru", "Thor", "Ulf", "Rag", "Bor", "Grimm"],
-                'male_ends': ["an", "gar", "ulf", "grim", "lok", "thor", "bane", "axe"],
-                'female_starts': ["Val", "Sig", "Frey", "Ing", "Ast", "Ran", "Sol", "Bri"],
-                'female_ends': ["rid", "run", "dis", "wyn", "hild", "gard", "borg", "dís"],
-                'preset_names': ["Thrud", "Gath", "Crom", "Wulfgar", "Hrothgar", "Beowulf", "Bjorn", "Ragnar", "Rollo", "Erik", "Leif", "Sven", "Knut", "Harald", "Sigurd", "Starkad", "Tormod", "Viggo", "Yorick", "Kane", "Brak", "Kull", "Bran", "Slaine", "Druss", "Logen", "Krod", "Korg", "Grognak", "Tor", "Volstagg", "Hogun", "Fandral", "Skurge", "Heimdall", "Tyr", "Baldur", "Vidar", "Vali", "Modi", "Red Sonya", "Valeria", "Bellit", "Freya", "Sigrid", "Lagertha", "Brynhild", "Gudrun", "Helga", "Astrid", "Ingrid", "Thyra", "Gunnhild", "Yrsa", "Sif", "Eowyn", "Boudicca", "Zenobia", "Hippolyta", "Penthesilea", "Atalanta", "Artemisia", "Tomoe", "Khutulun", "Cynane", "Alfhild", "Rusla", "Webiorg", "Hetha", "Skadi"]
-            },
-            'lusitania': {
-                'male_starts': ["Car", "Fer", "Al", "Rod", "San", "Gon", "Die", "Pedr"],
-                'male_ends': ["los", "nando", "dro", "rico", "tiago", "mingo", "berto"],
-                'female_starts': ["Mar", "Isa", "Cat", "Con", "Ter", "Lu", "Clar", "Bea"],
-                'female_ends': ["ía", "bella", "ncia", "suela", "mén", "cedes", "lores"],
-                'preset_names': ["Carlos", "Fernando", "Isabella", "Esperanza", "Diego", "Carmen"]
-            },
-            'oriental': {
-                'male_starts': ["Li", "Wang", "Chen", "Zhang", "Liu", "Yang", "Huang", "Zhao"],
-                'male_ends': ["wei", "ming", "feng", "jun", "hao", "ping", "gang", "lei"],
-                'female_starts': ["Li", "Wang", "Chen", "Liu", "Yang", "Zhou", "Wu", "Xu"],
-                'female_ends': ["na", "ying", "fang", "mei", "lan", "yan", "xin", "hui"],
-                'preset_names': ["Li Wei", "Wang Ming", "Chen Mei", "Liu Yan", "Zhang Feng", "Yang Lan"]
-            },
-            'qharan': {
-                'male_starts': ["Ab", "Ibn", "Mu", "Al", "Ha", "Sa", "Om", "Kha"],
-                'male_ends': ["med", "mad", "san", "lim", "tar", "rim", "eed", "bad"],
-                'female_starts': ["Fat", "Ay", "Zay", "Leil", "Jas", "Sor", "Nal", "Zul"],
-                'female_ends': ["ima", "sha", "nab", "ara", "eika", "orah", "ina", "ida"],
-                'preset_names': ["Ahmed", "Hassan", "Fatima", "Aisha", "Omar", "Leila"]
-            }
-        };
+        // Cultural name generation using imported modules
+        const gender = Math.random() < 0.5 ? "male" : "female";
 
-        if (!cultures[culture]) return "Unknown";
-
-        const cultureData = cultures[culture];
-
-        // 50% chance for preset name, 50% for generated
-        if (Math.random() < 0.5 && cultureData.preset_names.length > 0) {
-            return cultureData.preset_names[Math.floor(Math.random() * cultureData.preset_names.length)];
+        switch (culture) {
+            case 'aquilonian': return generateAquilonianName(gender);
+            case 'barbarian': return generateBarbarianName(gender);
+            case 'lusitania': return generateLusitanianName(gender);
+            case 'oriental': return generateOrientalName(gender);
+            case 'qharan': return generateQharanName(gender);
+            default: return "Unknown";
         }
-
-        // Generate name from syllables (50/50 male/female)
-        const isMale = Math.random() < 0.5;
-        let start, end;
-
-        if (isMale) {
-            start = cultureData.male_starts[Math.floor(Math.random() * cultureData.male_starts.length)];
-            end = cultureData.male_ends[Math.floor(Math.random() * cultureData.male_ends.length)];
-        } else {
-            start = cultureData.female_starts[Math.floor(Math.random() * cultureData.female_starts.length)];
-            end = cultureData.female_ends[Math.floor(Math.random() * cultureData.female_ends.length)];
-        }
-
-        return start + end;
     }
 
     generateBackground(primaryStat, secondaryStat) {
