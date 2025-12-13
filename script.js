@@ -3,24 +3,24 @@ class NPCGenerator {
     constructor() {
         this.characters = [];
         this.maxCharacters = 6;
-        
+
         // Initialize data
         this.initializeData();
-        
+
         // Bind event listeners
         this.bindEvents();
-        
+
         // Initialize UI
         this.updateCharacterGrid();
     }
-    
+
     initializeData() {
         // Stat distribution data
         this.statDistribution = [
-            ['Str', 24], ['Dex', 20], ['Con', 18], 
+            ['Str', 24], ['Dex', 20], ['Con', 18],
             ['Int', 15], ['Wis', 13], ['Cha', 10]
         ];
-        
+
         // Primary stat mapping
         this.primaryStatMapping = {
             'str': { secondary: 'wis', dump: 'int' },
@@ -30,27 +30,27 @@ class NPCGenerator {
             'int': { secondary: 'wis', dump: 'str' },
             'wis': { secondary: 'con', dump: 'dex' }
         };
-        
+
         // Species distribution (from species_distribution.csv)
         this.speciesDistribution = [
-            ['Human', 67], ['Dwarf', 11], ['Elf', 9], 
+            ['Human', 67], ['Dwarf', 11], ['Elf', 9],
             ['Ogre', 8], ['Halfing', 5]
         ];
-        
+
         // Level distribution (from character_level_distribution.csv)
         this.levelDistribution = [
             [1, 32], [2, 22], [3, 15], [4, 10], [5, 8],
             [6, 5], [7, 3], [8, 2], [9, 1], [10, 1], [11, 1]
         ];
-        
+
         // Class type distribution (only for mental stats: Int, Wis, Cha)
         this.classTypeDistribution = [
             ['Blunt', 46], ['Caster', 33], ['Semicaster', 21]
         ];
-        
+
         // Mental stats that use class type distribution
         this.mentalStats = ['int', 'wis', 'cha'];
-        
+
         // Complete class data from classes.json
         this.classesData = {
             "Blunt": {
@@ -86,11 +86,11 @@ class NPCGenerator {
                 },
                 "int": {
                     "classes": ["Wizard", "Ritualist"],
-                    "subclasses": ["Abjurer","Diviner", "Evoker", "Illusionist", "Bibliomancy", "Occultist", "Philosopher", "Artisan", "Elementalist", "Conjurer", "Enchanter", "Necromancer", "Transmuter", "Bladesinging"]
+                    "subclasses": ["Abjurer", "Diviner", "Evoker", "Illusionist", "Bibliomancy", "Occultist", "Philosopher", "Artisan", "Elementalist", "Conjurer", "Enchanter", "Necromancer", "Transmuter", "Bladesinging"]
                 },
                 "cha": {
                     "classes": ["Warlock", "Sorcerer", "Bard"],
-                    "subclasses": ["Dance", "Lore", "Valor","Glamour", "Drama", "Wild Magic", "Templar", "Draconic", "Aberrant", "Crimson", "Hungering Dark","Great Fool", "Horned King", "Archfey", "Infernal", "Undead", "Celestial", "Great Old One", "Exalted Assembly of the Feline Court"]
+                    "subclasses": ["Dance", "Lore", "Valor", "Glamour", "Drama", "Wild Magic", "Templar", "Draconic", "Aberrant", "Crimson", "Hungering Dark", "Great Fool", "Horned King", "Archfey", "Infernal", "Undead", "Celestial", "Great Old One", "Exalted Assembly of the Feline Court"]
                 }
             },
             "Semicaster": {
@@ -108,7 +108,7 @@ class NPCGenerator {
                 }
             }
         };
-        
+
         // Complete backgrounds from backgrounds.csv
         this.backgrounds = [
             { name: 'Acolyte', primary: 'Wisdom', tertiary: 'Charisma' },
@@ -202,11 +202,11 @@ class NPCGenerator {
             { name: 'Seeker of the Lost', primary: 'Intelligence', tertiary: 'Wisdom' },
             { name: 'World Weary', primary: 'Constitution', tertiary: 'Charisma' }
         ];
-        
+
         // Complete traits from traits.csv
         this.virtues = ['Chaste', 'Energetic', 'Forgiving', 'Generous', 'Honest', 'Just', 'Merciful', 'Modest', 'Pious', 'Prudent', 'Temperate', 'Trusting', 'Valorous', 'Hospitality', 'Love', 'Loyal'];
         this.vices = ['Lustful', 'Lazy', 'Vengeful', 'Selfish', 'Deceitful', 'Arbitrary', 'Cruel', 'Proud', 'Worldly', 'Reckless', 'Indulgent', 'Suspicious', 'Cowardly', 'Churlishness', 'Hate', 'Treacherous'];
-        
+
         // Complete origin feats from origin_feats.csv
         this.originFeats = [
             { name: 'I Fought, I Lived', primaryStat: 'Strength' },
@@ -225,11 +225,11 @@ class NPCGenerator {
             { name: 'Tavern Brawler', primaryStat: 'Strength' },
             { name: 'Tough', primaryStat: 'Constitution' }
         ];
-        
+
         // Load card data directly (embedded to avoid CORS issues)
         this.cardData = this.getCardData();
     }
-    
+
     getCardData() {
         // Complete card data from cards.json (66 cards)
         return [
@@ -1340,7 +1340,7 @@ class NPCGenerator {
             }
         ];
     }
-    
+
     bindEvents() {
         document.getElementById('generate-party').addEventListener('click', () => this.generateParty());
         document.getElementById('generate-individual').addEventListener('click', () => this.generateIndividual());
@@ -1348,128 +1348,128 @@ class NPCGenerator {
         document.getElementById('clear-screen').addEventListener('click', () => this.clearScreen());
         document.getElementById('clear-database').addEventListener('click', () => this.clearDatabase());
     }
-    
+
     // Utility functions
     weightedChoice(distribution) {
         const totalWeight = distribution.reduce((sum, [_, weight]) => sum + weight, 0);
         let random = Math.random() * totalWeight;
-        
+
         for (const [value, weight] of distribution) {
             random -= weight;
             if (random <= 0) return value;
         }
         return distribution[distribution.length - 1][0];
     }
-    
+
     roll3d6() {
-        return Array.from({length: 3}, () => Math.floor(Math.random() * 6) + 1).reduce((a, b) => a + b);
+        return Array.from({ length: 3 }, () => Math.floor(Math.random() * 6) + 1).reduce((a, b) => a + b);
     }
-    
+
     roll4d6KeepHighest3() {
-        const rolls = Array.from({length: 4}, () => Math.floor(Math.random() * 6) + 1);
+        const rolls = Array.from({ length: 4 }, () => Math.floor(Math.random() * 6) + 1);
         rolls.sort((a, b) => b - a);
         return rolls.slice(0, 3).reduce((a, b) => a + b);
     }
-    
+
     capitalizeFirst(str) {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
-    
+
     // Stat generation
     generatePlebStats() {
         const primaryStat = this.weightedChoice(this.statDistribution).toLowerCase();
         const mapping = this.primaryStatMapping[primaryStat];
         const secondaryStat = mapping.secondary;
         const dumpStat = mapping.dump;
-        
+
         // Convert abbreviated stats to full names
         const statMap = {
             'str': 'strength',
-            'dex': 'dexterity', 
+            'dex': 'dexterity',
             'con': 'constitution',
             'int': 'intelligence',
             'wis': 'wisdom',
             'cha': 'charisma'
         };
-        
+
         const primaryStatFull = statMap[primaryStat];
         const secondaryStatFull = statMap[secondaryStat];
         const dumpStatFull = statMap[dumpStat];
-        
+
         const statNames = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
         const stats = {};
-        
+
         // Roll base stats
         statNames.forEach(stat => {
             stats[stat] = this.roll3d6();
         });
-        
+
         // Apply minimums first
         stats[primaryStatFull] = Math.max(stats[primaryStatFull], 13);
         stats[secondaryStatFull] = Math.max(stats[secondaryStatFull], 9);
         stats[dumpStatFull] = Math.max(stats[dumpStatFull], 3);
-        
+
         statNames.forEach(stat => {
             if (stat !== primaryStatFull && stat !== secondaryStatFull && stat !== dumpStatFull) {
                 stats[stat] = Math.max(stats[stat], 6);
             }
         });
-        
+
         // Add +1 to primary and secondary after minimums
         stats[primaryStatFull] += 1;
         stats[secondaryStatFull] += 1;
-        
+
         return { stats, primaryStat, secondaryStat, dumpStat };
     }
-    
+
     generatePlayerStats() {
         const primaryStat = this.weightedChoice(this.statDistribution).toLowerCase();
         const mapping = this.primaryStatMapping[primaryStat];
         const secondaryStat = mapping.secondary;
         const dumpStat = mapping.dump;
-        
+
         // Convert abbreviated stats to full names
         const statMap = {
             'str': 'strength',
-            'dex': 'dexterity', 
+            'dex': 'dexterity',
             'con': 'constitution',
             'int': 'intelligence',
             'wis': 'wisdom',
             'cha': 'charisma'
         };
-        
+
         const primaryStatFull = statMap[primaryStat];
         const secondaryStatFull = statMap[secondaryStat];
         const dumpStatFull = statMap[dumpStat];
-        
+
         const statNames = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
         const stats = {};
-        
+
         // Roll base stats (4d6 keep highest 3)
         statNames.forEach(stat => {
             stats[stat] = this.roll4d6KeepHighest3();
         });
-        
+
         // Determine tertiary stat (highest remaining after primary, secondary, dump)
         const remaining = statNames.filter(s => s !== primaryStatFull && s !== secondaryStatFull && s !== dumpStatFull);
         const tertiaryStat = remaining.reduce((max, stat) => stats[stat] > stats[max] ? stat : max);
-        
+
         // Apply player minimums
         stats[primaryStatFull] = Math.max(stats[primaryStatFull], 15);
         stats[secondaryStatFull] = Math.max(stats[secondaryStatFull], 14);
         stats[tertiaryStat] = Math.max(stats[tertiaryStat], 13);
         stats[dumpStatFull] = Math.max(stats[dumpStatFull], 3);
-        
+
         statNames.forEach(stat => {
             if (stat !== primaryStatFull && stat !== secondaryStatFull && stat !== tertiaryStat && stat !== dumpStatFull) {
                 stats[stat] = Math.max(stats[stat], 6);
             }
         });
-        
+
         // Apply 3 random +1 bonuses (max +2 per stat)
         const bonusCount = {};
         statNames.forEach(stat => bonusCount[stat] = 0);
-        
+
         for (let i = 0; i < 3; i++) {
             const availableStats = statNames.filter(stat => bonusCount[stat] < 2);
             if (availableStats.length > 0) {
@@ -1478,18 +1478,18 @@ class NPCGenerator {
                 bonusCount[chosenStat] += 1;
             }
         }
-        
+
         return { stats, primaryStat, secondaryStat, dumpStat };
     }
-    
+
     // Character generation
     generateBasicInfo() {
         const level = parseInt(this.weightedChoice(this.levelDistribution));
         const species = this.weightedChoice(this.speciesDistribution);
-        
+
         return { level, species };
     }
-    
+
     generateClassInfo(primaryStat) {
         // Step 1: Determine class type based on primary stat
         let classType;
@@ -1500,25 +1500,25 @@ class NPCGenerator {
             // Physical stats: always Blunt
             classType = 'Blunt';
         }
-        
+
         // Step 2: Get class data for this type and primary stat
         const classData = this.classesData[classType][primaryStat];
         if (!classData) {
             // Fallback to basic Fighter if no data found
             return { type: 'Blunt', name: 'Fighter', subclass: 'Champion' };
         }
-        
+
         // Step 3: Randomly select class and subclass
         const className = classData.classes[Math.floor(Math.random() * classData.classes.length)];
         const subclass = classData.subclasses[Math.floor(Math.random() * classData.subclasses.length)];
-        
+
         return {
             type: classType,
             name: className,
             subclass: subclass
         };
     }
-    
+
     generateVowelName(usedVowels = new Set()) {
         // Complete vowel names from vowel_names.csv
         const vowelNames = {
@@ -1528,18 +1528,18 @@ class NPCGenerator {
             'O': ['Obadiah', 'Octavia', 'Octavian', 'Oda', 'Oddmund', 'Odette', 'Odile', 'Odilo', 'Odo', 'Odovacar', 'Oengus', 'Olaf', 'Olav', 'Oleksiy', 'Oliver', 'Olivier', 'Olwen', 'Omar', 'Omer', 'Onesimus', 'Onfroi', 'Onuphrius', 'Ophelia', 'Origen', 'Orin', 'Orlando', 'Orm', 'Ormond', 'Orpheus', 'Orsola', 'Osbert', 'Osborn', 'Oscar', 'Oskar', 'Osmaer', 'Osmund', 'Osric', 'Oswald', 'Oswin', 'Ottilia', 'Otto', 'Ovid', 'Owein', 'Owyn', 'Ozias', 'Oziel', 'Oznat', 'Ozymandias', 'Ozyas', 'Ozer'],
             'U': ['Ubaldo', 'Ubertino', 'Udo', 'Ugo', 'Uhtred', 'Ulbrecht', 'Ulfric', 'Ulf', 'Ulfhild', 'Uliana', 'Ulises', 'Ulman', 'Ulmo', 'Ulrich', 'Ultan', 'Ulyana', 'Umar', 'Umberto', 'Umi', 'Unai', 'Uncas', 'Undine', 'Unger', 'Unni', 'Urbain', 'Urban', 'Urbanus', 'Uriah', 'Urias', 'Urien', 'Ursella', 'Ursula', 'Urszula', 'Ursus', 'Urte', 'Urzica', 'Usama', 'Usher', 'Uskald', 'Ustinya', 'Uta', 'Utku', 'Uther', 'Uto', 'Utta', 'Uvaldo', 'Uzair', 'Uzi', 'Uziel', 'Uzziah']
         };
-        
+
         // Get available vowels (not used)
         const availableVowels = Object.keys(vowelNames).filter(v => !usedVowels.has(v));
         const vowelsToUse = availableVowels.length > 0 ? availableVowels : Object.keys(vowelNames);
-        
+
         const chosenVowel = vowelsToUse[Math.floor(Math.random() * vowelsToUse.length)];
         const nameList = vowelNames[chosenVowel];
         const name = nameList[Math.floor(Math.random() * nameList.length)];
-        
+
         return { name, vowel: chosenVowel };
     }
-    
+
     generateCulturalName(culture) {
         // Cultural name generation from the original script
         const cultures = {
@@ -1555,7 +1555,7 @@ class NPCGenerator {
                 'male_ends': ["an", "gar", "ulf", "grim", "lok", "thor", "bane", "axe"],
                 'female_starts': ["Val", "Sig", "Frey", "Ing", "Ast", "Ran", "Sol", "Bri"],
                 'female_ends': ["rid", "run", "dis", "wyn", "hild", "gard", "borg", "dís"],
-                'preset_names': ["Conan", "Valeria", "Thulsa", "Belit", "Subotai", "Thorgrim"]
+                'preset_names': ["Thrud", "Gath", "Crom", "Wulfgar", "Hrothgar", "Beowulf", "Bjorn", "Ragnar", "Rollo", "Erik", "Leif", "Sven", "Knut", "Harald", "Sigurd", "Starkad", "Tormod", "Viggo", "Yorick", "Kane", "Brak", "Kull", "Bran", "Slaine", "Druss", "Logen", "Krod", "Korg", "Grognak", "Tor", "Volstagg", "Hogun", "Fandral", "Skurge", "Heimdall", "Tyr", "Baldur", "Vidar", "Vali", "Modi", "Red Sonya", "Valeria", "Bellit", "Freya", "Sigrid", "Lagertha", "Brynhild", "Gudrun", "Helga", "Astrid", "Ingrid", "Thyra", "Gunnhild", "Yrsa", "Sif", "Eowyn", "Boudicca", "Zenobia", "Hippolyta", "Penthesilea", "Atalanta", "Artemisia", "Tomoe", "Khutulun", "Cynane", "Alfhild", "Rusla", "Webiorg", "Hetha", "Skadi"]
             },
             'lusitania': {
                 'male_starts': ["Car", "Fer", "Al", "Rod", "San", "Gon", "Die", "Pedr"],
@@ -1579,20 +1579,20 @@ class NPCGenerator {
                 'preset_names': ["Ahmed", "Hassan", "Fatima", "Aisha", "Omar", "Leila"]
             }
         };
-        
+
         if (!cultures[culture]) return "Unknown";
-        
+
         const cultureData = cultures[culture];
-        
+
         // 50% chance for preset name, 50% for generated
         if (Math.random() < 0.5 && cultureData.preset_names.length > 0) {
             return cultureData.preset_names[Math.floor(Math.random() * cultureData.preset_names.length)];
         }
-        
+
         // Generate name from syllables (50/50 male/female)
         const isMale = Math.random() < 0.5;
         let start, end;
-        
+
         if (isMale) {
             start = cultureData.male_starts[Math.floor(Math.random() * cultureData.male_starts.length)];
             end = cultureData.male_ends[Math.floor(Math.random() * cultureData.male_ends.length)];
@@ -1600,80 +1600,80 @@ class NPCGenerator {
             start = cultureData.female_starts[Math.floor(Math.random() * cultureData.female_starts.length)];
             end = cultureData.female_ends[Math.floor(Math.random() * cultureData.female_ends.length)];
         }
-        
+
         return start + end;
     }
-    
+
     generateBackground(primaryStat, secondaryStat) {
         // Convert abbreviated stats to full names
         const statMap = {
             'str': 'Strength',
-            'dex': 'Dexterity', 
+            'dex': 'Dexterity',
             'con': 'Constitution',
             'int': 'Intelligence',
             'wis': 'Wisdom',
             'cha': 'Charisma'
         };
-        
+
         const targetStat = Math.random() < 0.75 ? primaryStat : secondaryStat;
         const mapped = statMap[targetStat] || this.capitalizeFirst(targetStat);
-        
-        const matchingBgs = this.backgrounds.filter(bg => 
+
+        const matchingBgs = this.backgrounds.filter(bg =>
             bg.primary === mapped || bg.tertiary === mapped
         );
-        
+
         if (matchingBgs.length > 0) {
             return matchingBgs[Math.floor(Math.random() * matchingBgs.length)].name;
         }
-        
+
         return this.backgrounds[Math.floor(Math.random() * this.backgrounds.length)].name;
     }
-    
+
     generateTraits() {
         // Generate 2-4 traits total, must have at least 1 virtue and 1 vice
         const traitCount = Math.floor(Math.random() * 3) + 2; // 2, 3, or 4 traits
         const traits = [];
         const usedTraits = new Set();
-        
+
         // Ensure at least 1 virtue
         let virtue = this.virtues[Math.floor(Math.random() * this.virtues.length)];
         traits.push(virtue);
         usedTraits.add(virtue);
-        
+
         // Ensure at least 1 vice
         let vice = this.vices[Math.floor(Math.random() * this.vices.length)];
         traits.push(vice);
         usedTraits.add(vice);
-        
+
         // Fill remaining slots with random virtues or vices, avoiding duplicates
         while (traits.length < traitCount) {
             const allTraits = [...this.virtues, ...this.vices];
             const availableTraits = allTraits.filter(trait => !usedTraits.has(trait));
-            
+
             if (availableTraits.length === 0) break; // No more unique traits available
-            
+
             const randomTrait = availableTraits[Math.floor(Math.random() * availableTraits.length)];
             traits.push(randomTrait);
             usedTraits.add(randomTrait);
         }
-        
+
         return traits;
     }
-    
+
     generateOriginFeats(species, primaryStat, isPlayer = false) {
         // Convert abbreviated stats to full names
         const statMap = {
             'str': 'Strength',
-            'dex': 'Dexterity', 
+            'dex': 'Dexterity',
             'con': 'Constitution',
             'int': 'Intelligence',
             'wis': 'Wisdom',
             'cha': 'Charisma'
         };
-        
+
         const feats = [];
         let fCount = 1;
-        
+
         if (isPlayer) {
             fCount = species.toLowerCase() === 'human' ? 2 : 1;
         } else {
@@ -1687,7 +1687,7 @@ class NPCGenerator {
                 fCount = Math.random() < 0.5 ? 1 : 0;
             }
         }
-        
+
         for (let i = 0; i < fCount; i++) {
             let feat;
             if (Math.random() < 0.5) {
@@ -1703,37 +1703,37 @@ class NPCGenerator {
                     feat = this.originFeats[Math.floor(Math.random() * this.originFeats.length)];
                 }
             }
-            
+
             if (!feats.some(f => f.name === feat.name)) {
                 feats.push(feat);
             }
         }
-        
+
         return feats.map(f => f.name);
     }
-    
+
     generateTarotCard() {
         if (!this.cardData || this.cardData.length === 0) {
             console.warn('No card data available, using fallback');
             return {
                 title: "BALANCE",
                 orientation: "Upright",
-                type: "person", 
+                type: "person",
                 text: "A fair-minded person who can see multiple perspectives."
             };
         }
-        
+
         // Add some randomness by using current time as seed modifier
         const randomSeed = Date.now() + Math.random() * 1000;
         const cardIndex = Math.floor((randomSeed % this.cardData.length));
         const card = this.cardData[cardIndex];
-        
+
         // Use a different random approach for the roll
         const roll = Math.floor(Math.random() * 10) + 1;
-        
+
         const isReversed = roll > 5;
         const meanings = isReversed ? card.reversed_meaning : card.upright_meaning;
-        
+
         if (!meanings) {
             console.warn('Card missing meanings:', card);
             return {
@@ -1743,18 +1743,18 @@ class NPCGenerator {
                 text: "The meaning of this card is unclear."
             };
         }
-        
+
         let meaningType;
         if (roll === 1 || roll === 6) meaningType = 'person';
         else if (roll === 2 || roll === 7) meaningType = 'creature_or_trap';
         else if (roll === 3 || roll === 8) meaningType = 'place';
         else if (roll === 4 || roll === 9) meaningType = 'treasure';
         else meaningType = 'situation';
-        
+
         const meaningText = meanings[meaningType] || meanings[Object.keys(meanings)[0]] || "Unknown meaning";
-        
+
         console.log(`Generated tarot: ${card.title}, roll: ${roll}, type: ${meaningType}`);
-        
+
         return {
             title: card.title,
             orientation: isReversed ? 'Reversed' : 'Upright',
@@ -1762,36 +1762,46 @@ class NPCGenerator {
             text: meaningText
         };
     }
-    
+
     // Main generation functions
     generateParty() {
         this.showLoading();
-        
+
         setTimeout(() => {
             const partySize = Math.max(Math.floor(Math.random() * 4) + 1, Math.floor(Math.random() * 6) + 1);
             const party = [];
-            
+
             // Determine cultural members (1d7-1, so 0-6)
-            const culturalMembers = Math.max(0, Math.floor(Math.random() * 7));
-            const culturalMembersCount = Math.min(culturalMembers, partySize);
-            
-            // Choose random culture
+            let culturalMembers = Math.max(0, Math.floor(Math.random() * 7));
+
+            // Choose random culture or use selected
+            const regionSelect = document.getElementById('region-select');
+            const selectedRegion = regionSelect ? regionSelect.value : 'random';
             const cultures = ['aquilonian', 'barbarian', 'lusitania', 'oriental', 'qharan'];
-            const chosenCulture = cultures[Math.floor(Math.random() * cultures.length)];
-            
+
+            let chosenCulture;
+            if (selectedRegion !== 'random') {
+                chosenCulture = selectedRegion;
+                culturalMembers = partySize; // Force all members to be of the selected culture
+            } else {
+                chosenCulture = cultures[Math.floor(Math.random() * cultures.length)];
+            }
+
+            const culturalMembersCount = Math.min(culturalMembers, partySize);
+
             const usedVowels = new Set();
             const tarotMemberIndex = Math.floor(Math.random() * partySize);
-            
+
             // Generate party tarot card
             const partyTarot = this.generateTarotCard();
-            
+
             for (let i = 0; i < partySize; i++) {
                 const { level, species } = this.generateBasicInfo();
-                
+
                 // Name generation: cultural vs vowel
                 let name;
                 const useCultural = i < culturalMembersCount;
-                
+
                 if (useCultural) {
                     name = this.generateCulturalName(chosenCulture);
                 } else {
@@ -1799,16 +1809,16 @@ class NPCGenerator {
                     name = vowelName;
                     usedVowels.add(vowel);
                 }
-                
+
                 const { stats, primaryStat, secondaryStat, dumpStat } = this.generatePlebStats();
                 const classInfo = this.generateClassInfo(primaryStat);
                 const background = this.generateBackground(primaryStat, secondaryStat);
                 const traits = this.generateTraits();
                 const originFeats = this.generateOriginFeats(species, primaryStat);
-                
+
                 // Individual tarot for randomly selected member
                 const individualTarot = (i === tarotMemberIndex) ? this.generateTarotCard() : null;
-                
+
                 const character = {
                     id: Date.now() + i,
                     name,
@@ -1827,27 +1837,39 @@ class NPCGenerator {
                     individualTarot,
                     culture: useCultural ? chosenCulture : null
                 };
-                
+
                 party.push(character);
             }
-            
+
             this.addCharacters(party);
             this.hideLoading();
         }, 1000);
     }
-    
+
     generateIndividual() {
         this.showLoading();
-        
+
         setTimeout(() => {
             const { level, species } = this.generateBasicInfo();
-            const { name } = this.generateVowelName();
+
+            const regionSelect = document.getElementById('region-select');
+            const selectedRegion = regionSelect ? regionSelect.value : 'random';
+            let name;
+            let culture = null;
+
+            if (selectedRegion !== 'random') {
+                name = this.generateCulturalName(selectedRegion);
+                culture = selectedRegion;
+            } else {
+                const { name: vowelName } = this.generateVowelName();
+                name = vowelName;
+            }
             const { stats, primaryStat, secondaryStat, dumpStat } = this.generatePlebStats();
             const classInfo = this.generateClassInfo(primaryStat);
             const background = this.generateBackground(primaryStat, secondaryStat);
             const traits = this.generateTraits();
             const originFeats = this.generateOriginFeats(species, primaryStat);
-            
+
             const character = {
                 id: Date.now(),
                 name,
@@ -1863,28 +1885,40 @@ class NPCGenerator {
                 originFeats,
                 isPlayer: false,
                 individualTarot: this.generateTarotCard(),
-                secondTarot: this.generateTarotCard() // Individuals get 2 cards
+                isPlayer: false,
+                individualTarot: this.generateTarotCard(),
+                secondTarot: this.generateTarotCard(), // Individuals get 2 cards
+                culture: culture
             };
-            
+
             this.addCharacters([character]);
             this.hideLoading();
         }, 800);
     }
-    
+
     generatePlayer() {
         this.showLoading();
-        
+
         setTimeout(() => {
             const forceHuman = document.getElementById('force-human').checked;
             const { level } = this.generateBasicInfo();
-            const { name } = this.generateVowelName();
+            const regionSelect = document.getElementById('region-select');
+            const selectedRegion = regionSelect ? regionSelect.value : 'random';
+            let name;
+
+            if (selectedRegion !== 'random') {
+                name = this.generateCulturalName(selectedRegion);
+            } else {
+                const { name: vowelName } = this.generateVowelName();
+                name = vowelName;
+            }
             const species = forceHuman ? 'Human' : this.weightedChoice(this.speciesDistribution);
             const { stats, primaryStat, secondaryStat, dumpStat } = this.generatePlayerStats();
             const classInfo = this.generateClassInfo(primaryStat);
             const background = this.generateBackground(primaryStat, secondaryStat);
             const traits = this.generateTraits();
             const originFeats = this.generateOriginFeats(species, primaryStat, true);
-            
+
             const character = {
                 id: Date.now(),
                 name,
@@ -1902,47 +1936,47 @@ class NPCGenerator {
                 individualTarot: this.generateTarotCard(),
                 secondTarot: this.generateTarotCard() // Players get 2 cards
             };
-            
+
             this.addCharacters([character]);
             this.hideLoading();
         }, 800);
     }
-    
+
     // UI Management
     addCharacters(newCharacters) {
         // Add new characters to the beginning
         this.characters = [...newCharacters, ...this.characters];
-        
+
         // Keep only the last 6 characters
         if (this.characters.length > this.maxCharacters) {
             this.characters = this.characters.slice(0, this.maxCharacters);
         }
-        
+
         this.updateCharacterGrid();
         this.updateTarotDisplay(newCharacters);
     }
-    
+
     updateTarotDisplay(newCharacters) {
         const tarotDisplay = document.getElementById('tarot-display');
         const tarotCard = document.getElementById('tarot-card');
-        
+
         // Check if any character has party tarot
         const partyTarot = newCharacters.find(c => c.partyTarot)?.partyTarot;
-        
+
         if (partyTarot) {
             tarotCard.innerHTML = `<strong>${partyTarot.title}:</strong> ${partyTarot.text}`;
             tarotDisplay.classList.remove('hidden');
-            
+
             // Hide after 8 seconds
             setTimeout(() => {
                 tarotDisplay.classList.add('hidden');
             }, 8000);
         }
     }
-    
+
     updateCharacterGrid() {
         const grid = document.getElementById('character-grid');
-        
+
         if (this.characters.length === 0) {
             grid.innerHTML = `
                 <div class="empty-slot">
@@ -1954,17 +1988,17 @@ class NPCGenerator {
             `;
             return;
         }
-        
+
         grid.innerHTML = this.characters.map(character => this.createCharacterCard(character)).join('');
     }
-    
+
     createCharacterCard(character) {
         const playerClass = character.isPlayer ? 'player-character' : '';
         const statAbbr = {
             strength: 'STR', dexterity: 'DEX', constitution: 'CON',
             intelligence: 'INT', wisdom: 'WIS', charisma: 'CHA'
         };
-        
+
         let tarotSection = '';
         if (character.partyTarot) {
             tarotSection += `
@@ -1987,7 +2021,7 @@ class NPCGenerator {
                 </div>
             `;
         }
-        
+
         return `
             <div class="character-card ${playerClass}">
                 <div class="character-header">
@@ -2071,23 +2105,23 @@ class NPCGenerator {
             </div>
         `;
     }
-    
+
     clearScreen() {
         this.characters = [];
         this.updateCharacterGrid();
         document.getElementById('tarot-display').classList.add('hidden');
     }
-    
+
     clearDatabase() {
         if (confirm('Are you sure you want to clear all characters? This cannot be undone.')) {
             this.clearScreen();
         }
     }
-    
+
     showLoading() {
         document.getElementById('loading-overlay').classList.remove('hidden');
     }
-    
+
     hideLoading() {
         document.getElementById('loading-overlay').classList.add('hidden');
     }
